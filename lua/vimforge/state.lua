@@ -22,6 +22,8 @@ M.active = {
   -- instruction panel window/buffer
   panel_win = nil,
   panel_buf = nil,
+  -- window that displays the scratch (practice) buffer
+  practice_win = nil,
   -- window/buffer to restore on exit
   prev_win = nil,
   prev_buf = nil,
@@ -53,6 +55,7 @@ function M.reset_all()
   M.active.lesson_id = nil
   M.active.panel_win = nil
   M.active.panel_buf = nil
+  M.active.practice_win = nil
   M.active.prev_win = nil
   M.active.prev_buf = nil
   clear_exercise()

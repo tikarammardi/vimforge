@@ -6,10 +6,14 @@ local lesson_mod = require("vimforge.lesson")
 M._lessons = {}
 M._by_id = {}
 M._loaded = false
+-- Test hook: override (or empty) the built-in list for isolated tests.
+M._builtins_override = nil
 
 -- Built-in lesson modules, in curriculum order. A module is added here once
 -- it is implemented; load_builtins() is strict about every module listed.
-local BUILTINS = {}
+local BUILTINS = {
+  "vimforge.lessons.modes",
+}
 
 function M.add(lesson)
   local normalized = lesson_mod.validate(lesson)
@@ -21,12 +25,18 @@ function M.add(lesson)
   return normalized
 end
 
+-- Test hook: override the built-in list (pass {} to load none).
+function M.set_builtins_for_test(names)
+  M._builtins_override = names
+end
+
 function M.load_builtins()
   if M._loaded then
     return
   end
   M._loaded = true
-  for _, name in ipairs(BUILTINS) do
+  local list = M._builtins_override or BUILTINS
+  for _, name in ipairs(list) do
     local ok, mod = pcall(require, name)
     if not ok then
       error("vimforge: failed to load lesson module '" .. name .. "': " .. tostring(mod), 2)

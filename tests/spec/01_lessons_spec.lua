@@ -108,6 +108,12 @@ end)
 describe("lesson registry", function()
   before_each(function()
     registry.reset()
+    registry.set_builtins_for_test({})
+  end)
+
+  after_each(function()
+    registry.set_builtins_for_test(nil)
+    registry.reset()
   end)
 
   it("adds and retrieves lessons", function()
