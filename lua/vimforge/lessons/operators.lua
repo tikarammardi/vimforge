@@ -1,0 +1,122 @@
+return {
+  id = "operators",
+  title = "Operators",
+  summary = "Operators like d (delete), c (change), y (yank) combine with motions and objects.",
+  concept = "An operator acts on the text a motion covers. d deletes, c deletes and opens INSERT mode, y yanks (copies) into the register, p puts the register after the cursor. d$ and D delete to the end of the line, C changes to the end of the line, dd deletes the whole line, and ~ swaps the case of a character. u undoes the last change.",
+  exercises = {
+    {
+      id = "delete-line-with-dd",
+      instruction = "Delete the second line entirely using dd.",
+      initial_content = { "keep", "delete me", "keep" },
+      cursor = { 2, 0 },
+      validation = { type = "buffer", expected = { "keep", "keep" } },
+      success_message = "dd deletes the whole line the cursor is on.",
+      hints = {
+        "Press d twice in quick succession.",
+      },
+      solution = { keys = "dd", text = "Press dd." },
+    },
+    {
+      id = "delete-to-eol-with-d-dollar",
+      instruction = "With the cursor on the 't' of 'this', press d$ to delete from the cursor to the end of the line.",
+      initial_content = { "delete this part" },
+      cursor = { 1, 7 },
+      validation = { type = "buffer", expected = { "delete" } },
+      success_message = "d$ deletes to the end of the line.",
+      hints = {
+        "Type d, then $.",
+        "Everything from the cursor to the line end is removed.",
+      },
+      solution = { keys = "d$", text = "Type d, then $." },
+    },
+    {
+      id = "delete-to-eol-with-D",
+      instruction = "With the cursor on the space before 'World', press D (delete to end of line) so the line reads 'Hello'.",
+      initial_content = { "Hello World" },
+      cursor = { 1, 5 },
+      validation = { type = "buffer", expected = { "Hello" } },
+      success_message = "D is a shorthand for d$.",
+      hints = {
+        "Press capital D.",
+      },
+      solution = { keys = "D", text = "Press D." },
+    },
+    {
+      id = "change-word-with-cw",
+      instruction = "With the cursor on the 'c' of 'cat', press cw to delete the word and enter INSERT mode. Type dog, then press <Esc>. The line must read: the dog",
+      initial_content = { "the cat" },
+      cursor = { 1, 4 },
+      validation = { type = "buffer", expected = { "the dog" } },
+      success_message = "cw changes (deletes + inserts) from the cursor to the next word.",
+      hints = {
+        "Type cw, then type dog.",
+        "Press <Esc> when done.",
+      },
+      solution = { keys = "cwdog<Esc>", text = "Type cw, type dog, press <Esc>." },
+    },
+    {
+      id = "change-to-eol-with-C",
+      instruction = "Press C to delete from the cursor to the end of the line and enter INSERT mode. Retype the sentence so it reads: I like dogs",
+      initial_content = { "I like cats" },
+      cursor = { 1, 0 },
+      validation = { type = "buffer", expected = { "I like dogs" } },
+      success_message = "C is a shorthand for c$.",
+      hints = {
+        "Press capital C.",
+        "Type 'I like dogs' then press <Esc>.",
+      },
+      solution = { keys = "CI like dogs<Esc>", text = "Press C, type 'I like dogs', press <Esc>." },
+    },
+    {
+      id = "yank-line-and-put-with-yyp",
+      instruction = "Yank the line under the cursor with yy, then put a copy below it with p. The register must hold: copy me",
+      initial_content = { "copy me" },
+      cursor = { 1, 0 },
+      validation = {
+        type = "composite",
+        validations = {
+          { type = "buffer", expected = { "copy me", "copy me" } },
+          { type = "register", expected = "copy me" },
+        },
+      },
+      success_message = "yy yanks the line into the register, p puts it after the cursor.",
+      hints = {
+        "Press y twice (yy) to yank the current line.",
+        "Press p to put the yanked line below.",
+      },
+      solution = { keys = "yyp", text = "Press y twice (yy), then p." },
+    },
+    {
+      id = "swap-case-with-tilde",
+      instruction = "Press ~ to swap the case of the character under the cursor so the line reads: Hello",
+      initial_content = { "hello" },
+      cursor = { 1, 0 },
+      validation = { type = "buffer", expected = { "Hello" } },
+      success_message = "~ toggles the case of a character.",
+      hints = {
+        "Press the ~ key (shift + backtick).",
+      },
+      solution = { keys = "~", text = "Press ~." },
+    },
+    {
+      id = "undo-with-u",
+      instruction = "Make a mistake and fix it: press A to append at the end, type X, press <Esc>, then undo the whole change with u. The line must be back to: v1",
+      file = true,
+      initial_content = { "v1" },
+      cursor = { 1, 0 },
+      validation = {
+        type = "composite",
+        validations = {
+          { type = "buffer", expected = { "v1" } },
+          { type = "sequence", allowed = { { "u" } } },
+        },
+      },
+      success_message = "u undoes your last change.",
+      hints = {
+        "First create a change: press A, type X, press <Esc>.",
+        "Then press u to undo it.",
+      },
+      solution = { keys = "AX<Esc>u", text = "Press A, type X, press <Esc>, then press u." },
+    },
+  },
+}

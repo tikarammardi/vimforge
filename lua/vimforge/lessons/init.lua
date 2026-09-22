@@ -13,6 +13,10 @@ M._builtins_override = nil
 -- it is implemented; load_builtins() is strict about every module listed.
 local BUILTINS = {
   "vimforge.lessons.modes",
+  "vimforge.lessons.moving",
+  "vimforge.lessons.word_motions",
+  "vimforge.lessons.operators",
+  "vimforge.lessons.text_objects",
 }
 
 function M.add(lesson)

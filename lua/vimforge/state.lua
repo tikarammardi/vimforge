@@ -15,6 +15,10 @@ M.active = {
   keys = {},
   -- recorded Ex commands (command validator)
   commands = {},
+  -- last cursor position in normal mode; < and > marks are only set when
+  -- visual mode ENDS, so a live selection is derived from this anchor plus
+  -- the current cursor
+  selection_anchor = nil,
   -- scratch buffer id for the current exercise
   buf = nil,
   -- temp file path for file-backed exercises
@@ -41,6 +45,7 @@ local function clear_exercise()
   M.active.hints_shown = 0
   M.active.keys = {}
   M.active.commands = {}
+  M.active.selection_anchor = nil
   M.active.buf = nil
   M.active.temp_file = nil
   M.active.extmarks = {}

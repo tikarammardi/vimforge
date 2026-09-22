@@ -62,11 +62,25 @@ function M._build_ctx()
   end
 
   local selection
-  if mode and (mode == "v" or mode == "V" or mode == "\x16") and valid then
-    local srow, scol = vim.api.nvim_buf_get_mark(buf, "<")
-    local erow, ecol = vim.api.nvim_buf_get_mark(buf, ">")
-    if srow > 0 and erow > 0 then
-      selection = { start = { srow, scol }, finish = { erow, ecol } }
+  if mode and (mode == "v" or mode == "V" or mode == "\x16") and valid and cursor then
+    -- Neovim only sets the < and > marks when visual mode ENDS, so a live
+    -- selection is derived from the last normal-mode cursor position (the
+    -- anchor) plus the current cursor (the extending end).
+    local start, finish
+    if state.active.selection_anchor then
+      start, finish = state.active.selection_anchor, cursor
+    else
+      local lm = vim.api.nvim_buf_get_mark(buf, "<")
+      local rm = vim.api.nvim_buf_get_mark(buf, ">")
+      if type(lm) == "table" and lm[1] > 0 and type(rm) == "table" and rm[1] > 0 then
+        start, finish = { lm[1], lm[2] }, { rm[1], rm[2] }
+      end
+    end
+    if start then
+      if (start[1] > finish[1]) or (start[1] == finish[1] and start[2] > finish[2]) then
+        start, finish = finish, start
+      end
+      selection = { start = start, finish = finish }
     end
   end
 
@@ -140,8 +154,17 @@ local function _create_scratch(exercise, lesson)
     local path = dir .. "/" .. lesson.id .. "-" .. exercise.id .. ".txt"
     vim.fn.writefile(exercise.initial_content, path)
     state.active.temp_file = path
-    buf = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_name(buf, path)
+    -- :edit! performs a real file load (nvim_buf_set_name alone leaves the
+    -- buffer empty) and makes the file contents the buffer's undo origin, so
+    -- `u` restores the initial content exactly as in a real file. :edit!
+    -- loads into the current window's buffer, so make sure the practice
+    -- window is current (never the panel window).
+    if state.active.practice_win and vim.api.nvim_win_is_valid(state.active.practice_win)
+      and vim.api.nvim_get_current_win() ~= state.active.practice_win then
+      vim.api.nvim_set_current_win(state.active.practice_win)
+    end
+    vim.cmd("silent! edit! " .. vim.fn.fnameescape(path))
+    buf = vim.api.nvim_get_current_buf()
   else
     buf = vim.api.nvim_create_buf(false, true)
     vim.bo[buf].buftype = "nofile"
@@ -188,6 +211,45 @@ local function _setup_sequence(exercise)
     end
     vim.keymap.set("n", k, handler, { buffer = buf })
   end
+end
+
+-- Tracks the last cursor position in NORMAL mode so a live visual selection
+-- can be derived. Neovim's < and > marks are only written when visual mode
+-- ENDS, so the anchor is where the cursor was in normal mode when v/V/<C-v>
+-- was pressed. v/V/<C-v> are never intercepted (a keymap + re-feed corrupts
+-- key bursts like "viw", because the re-queued v lands after the rest of the
+-- burst in the typeahead queue); the anchor is captured via CursorMoved /
+-- ModeChanged instead.
+local function _setup_visual_anchor(exercise)
+  local needed = false
+  local function collect(validation)
+    if validation.type == "selection" then
+      needed = true
+    elseif validation.type == "composite" then
+      for _, sub in ipairs(validation.validations) do
+        collect(sub)
+      end
+    end
+  end
+  collect(exercise.validation)
+  if not needed then
+    return
+  end
+  local function record()
+    -- Only the practice buffer matters; ignore cursor moves in the panel.
+    if not (state.active.buf and vim.api.nvim_win_get_buf(0) == state.active.buf) then
+      return
+    end
+    local m = vim.api.nvim_get_mode().mode
+    if m == "n" or m == "no" then
+      local c = vim.api.nvim_win_get_cursor(0)
+      state.active.selection_anchor = { c[1], c[2] }
+    end
+  end
+  vim.api.nvim_create_autocmd({ "CursorMoved", "ModeChanged" }, {
+    group = AUGROUP,
+    callback = record,
+  })
 end
 
 local function on_cmdline_enter()
@@ -354,6 +416,9 @@ function M._on_success()
 
   if state.active.buf and vim.api.nvim_buf_is_valid(state.active.buf) then
     vim.keymap.set("n", "<CR>", M.next, { buffer = state.active.buf })
+    -- Selection exercises succeed while still in VISUAL mode; <CR> there
+    -- must advance too (Vim's default would just extend the selection).
+    vim.keymap.set("v", "<CR>", M.next, { buffer = state.active.buf })
   else
     -- The buffer was closed by the exercise itself (e.g. :q): auto-advance.
     vim.defer_fn(function()
@@ -373,6 +438,7 @@ function M.start_exercise(exercise)
   state.active.hints_shown = 0
   state.active.keys = {}
   state.active.commands = {}
+  state.active.selection_anchor = nil
 
   local old_buf = state.active.buf
   local buf = _create_scratch(exercise, lesson)
@@ -387,6 +453,10 @@ function M.start_exercise(exercise)
 
   local row = math.min(exercise.cursor[1], #exercise.initial_content)
   vim.api.nvim_win_set_cursor(0, { row, exercise.cursor[2] })
+  -- Seed the visual-selection anchor with the initial (clamped) cursor so it
+  -- is correct even if the user presses v before any CursorMoved fires.
+  local c0 = vim.api.nvim_win_get_cursor(0)
+  state.active.selection_anchor = { c0[1], c0[2] }
 
   if exercise.start_mode == "insert" then
     vim.cmd("startinsert!")
@@ -414,7 +484,10 @@ function M.start_exercise(exercise)
   vim.keymap.set("n", "?", M.hint, { buffer = buf })
   vim.keymap.set("n", "q", M.quit, { buffer = buf })
   _setup_sequence(exercise)
+  -- _setup_autocmds clears AUGROUP, so the anchor recorder must be created
+  -- after it.
   _setup_autocmds(buf)
+  _setup_visual_anchor(exercise)
   schedule_check()
 end
 
@@ -467,6 +540,12 @@ end
 function M.next()
   if state.active.status ~= "success" then
     return
+  end
+  -- A selection exercise can succeed with the buffer in VISUAL mode; the
+  -- visual state must not leak into the next exercise's fresh buffer.
+  local mode = vim.api.nvim_get_mode().mode
+  if mode == "v" or mode == "V" or mode == "\x16" then
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "x", false)
   end
   local lesson = state.active.lesson
   local idx = state.active.exercise_index
