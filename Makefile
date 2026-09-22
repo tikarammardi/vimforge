@@ -7,7 +7,7 @@ export VIMFORGE_PLENARY := $(PLENARY)
 
 PLENARY_CMD = --cmd "set rtp+=$(PLENARY)" --cmd "runtime! plugin/plenary.vim"
 
-.PHONY: test test-one play demo clean
+.PHONY: test test-one play clean
 
 test:
 	$(NVIM) --headless --clean $(PLENARY_CMD) \
@@ -23,10 +23,6 @@ test-one:
 
 play:
 	$(NVIM) --clean -u tests/minimal_init.lua -c "VimForge"
-
-demo:
-	$(NVIM) --headless --clean -u tests/minimal_init.lua \
-	  -c "lua require('vimforge.demo').run()" -c "qa!"
 
 clean:
 	rm -rf tests/plenary.nvim

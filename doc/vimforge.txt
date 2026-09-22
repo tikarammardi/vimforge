@@ -1,0 +1,140 @@
+*vimforge.txt*                  Learn Vim by using real Vim    *vimforge*
+
+1. Introduction                                  |vimforge-intro|
+2. Commands                                      |vimforge-commands|
+3. Configuration                                 |vimforge-config|
+4. Lua API                                       |vimforge-api|
+5. Writing lessons                               |vimforge-lessons|
+6. Development                                   |vimforge-dev|
+
+==============================================================================
+1. Introduction                                                 *vimforge-intro*
+
+vimforge turns Neovim into a Vim trainer. |:VimForge| opens a lesson
+selector; each lesson is a sequence of exercises. For every exercise the
+plugin opens a scratch buffer (or a real temp file for undo exercises) with
+the exercise's starting content, shows the instruction in a side panel, and
+validates your real Vim keystrokes as you go.
+
+Everything happens in real Vim: operators, text objects, registers and undo
+behave exactly as they would in your own files. Progress is stored locally
+as JSON (|vimforge-config|) — no network, no accounts.
+
+Inside an exercise:
+  ?       show a hint
+  q       quit the lesson (window/buffer are restored)
+  <Enter> advance after success (works in VISUAL mode too)
+
+==============================================================================
+2. Commands                                                *vimforge-commands*
+
+                                                            *:VimForge*
+:VimForge            Open the lesson selector.
+
+                                                    *:VimForgeStart*
+:VimForgeStart [id]  Start a lesson by id, or the first incomplete lesson.
+                     Completion is enabled for lesson ids.
+
+                                                     *:VimForgeNext*
+:VimForgeNext        Advance to the next exercise.
+
+                                                 *:VimForgeRestart*
+:VimForgeRestart     Restart the current exercise.
+
+                                               *:VimForgeProgress*
+:VimForgeProgress    Show progress per lesson and the overall percentage.
+
+                                                   *:VimForgeReset*
+:VimForgeReset       Clear all saved progress.
+
+Built-in lessons: ~
+  1. intro-to-modes   Introduction to Modes (i, a, o, Esc)
+  2. moving-around    Moving Around (h j k l, 0 $, gg G, counts)
+  3. word-motions     Word Motions (w b e, W B, f t ;)
+  4. operators        Operators (d c y, dd d$ D, cw C, yy p, ~, u)
+  5. text-objects     Text Objects (di" da" ci( diw ci' dip, viw)
+
+==============================================================================
+3. Configuration                                             *vimforge-config*
+
+All options have defaults; setup is optional. >
+
+    require("vimforge").setup({
+        check_delay = 120,       -- ms of quiet before a validation check
+        panel_width = 34,        -- instruction panel width (columns)
+        persist_progress = true, -- write progress.json
+        auto_start = false,      -- open the selector on VimEnter
+        data_dir = nil,          -- default: stdpath("data") .. "/vimforge"
+    })
+<
+Progress is stored at <data_dir>/progress.json as plain JSON, tracking
+completed lessons/exercises with attempt and hint counts.
+
+==============================================================================
+4. Lua API                                                        *vimforge-api*
+
+require("vimforge").setup(opts)   Configure (defaults work without it).
+require("vimforge").open()        Open the lesson selector.
+require("vimforge").start(id?)    Start a lesson (default: first not done).
+require("vimforge").next()        Advance to the next exercise.
+require("vimforge").restart()     Restart the current exercise.
+require("vimforge").quit()        Leave the lesson, restore the window.
+require("vimforge").show_progress()  Show a progress summary.
+require("vimforge").reset()       Clear all saved progress.
+
+==============================================================================
+5. Writing lessons                                             *vimforge-lessons*
+
+A lesson is a declarative table in lua/vimforge/lessons/<id>.lua, registered
+in the BUILTINS list in lua/vimforge/lessons/init.lua: >
+
+    return {
+        id = "my-lesson",
+        title = "My Lesson",
+        summary = "One line shown in the selector.",
+        concept = "Explainer shown in the panel.",
+        exercises = {
+            {
+                id = "my-exercise",
+                instruction = "Do the thing.",
+                initial_content = { "hello" },
+                cursor = { 1, 0 },        -- {row, col}
+                start_mode = "normal",    -- or "insert"
+                show_target = true,       -- extmark at the target position
+                validation = { type = "buffer", expected = { "HELLO" } },
+                success_message = "ggGvU uppercases the file.",
+                hints = { "Try a visual-line selection." },
+                solution = { keys = "ggGvU", text = "gg, G, v, U." },
+                file = false,             -- true: real temp file (undo)
+            },
+        },
+    }
+<
+Validator types: ~
+  buffer           full buffer content (trailing whitespace ignored)
+  cursor_position  cursor exactly at {row, col}
+  mode             current mode ("normal", "insert", "visual", ...)
+  selection        live visual selection spans start..finish
+  register         register contents (default unnamed ")
+  search           last search pattern
+  command          Ex commands entered (aliases: w matches :wq, :x, ...)
+  file             temp file on disk (file-backed exercises)
+  sequence         one of the allowed key sequences was pressed, in order
+  composite        all sub-validations pass
+
+Every exercise should carry a canonical solution.keys: the test suite
+replays every solution through the real engine (feedkeys) and asserts the
+validator passes, so each lesson is verified against actual Neovim semantics.
+
+==============================================================================
+6. Development                                                     *vimforge-dev*
+
+    make test       # plenary suite (plenary.nvim required; PLENARY=/path)
+    make play       # open the plugin in a clean nvim
+
+The solution-replay spec (tests/spec/05_solutions_spec.lua) drives the real
+runner for every lesson: it feeds each exercise's solution keys and waits
+for the validator to pass. Add a lesson, add its exercises, keep the
+replay green.
+
+vim:tw=78:ts=8:ft=help
