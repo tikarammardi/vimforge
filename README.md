@@ -37,6 +37,7 @@ VISUAL mode).
 | 3 | `word-motions`   | Word Motions      | w b e, W B, f t ; |
 | 4 | `operators`      | Operators         | d c y, dd d$ D, cw C, yy p, ~, u |
 | 5 | `text-objects`   | Text Objects      | di" da" ci( diw ci' dip, viw |
+| 6 | `visual-mode`    | Visual Mode       | v V <C-v>, extend, d c U on selections |
 
 ## Requirements
 

@@ -65,10 +65,23 @@ function M._build_ctx()
   if mode and (mode == "v" or mode == "V" or mode == "\x16") and valid and cursor then
     -- Neovim only sets the < and > marks when visual mode ENDS, so a live
     -- selection is derived from the last normal-mode cursor position (the
-    -- anchor) plus the current cursor (the extending end).
+    -- anchor) plus the current cursor (the extending end), shaped by the
+    -- visual flavor: charwise is the plain span, linewise covers whole
+    -- lines, blockwise the rectangle between the two corners.
     local start, finish
     if state.active.selection_anchor then
-      start, finish = state.active.selection_anchor, cursor
+      local a = state.active.selection_anchor
+      if mode == "V" then
+        start = { math.min(a[1], cursor[1]), 0 }
+        local er = math.max(a[1], cursor[1])
+        local line = (lines or {})[er] or ""
+        finish = { er, math.max(#line - 1, 0) }
+      elseif mode == "\x16" then
+        start = { math.min(a[1], cursor[1]), math.min(a[2], cursor[2]) }
+        finish = { math.max(a[1], cursor[1]), math.max(a[2], cursor[2]) }
+      else
+        start, finish = a, cursor
+      end
     else
       local lm = vim.api.nvim_buf_get_mark(buf, "<")
       local rm = vim.api.nvim_buf_get_mark(buf, ">")
@@ -415,10 +428,21 @@ function M._on_success()
   _render_panel_feedback(msg, "VimForgeSuccess", sub)
 
   if state.active.buf and vim.api.nvim_buf_is_valid(state.active.buf) then
-    vim.keymap.set("n", "<CR>", M.next, { buffer = state.active.buf })
+    local buf = state.active.buf
+    vim.keymap.set("n", "<CR>", M.next, { buffer = buf })
     -- Selection exercises succeed while still in VISUAL mode; <CR> there
     -- must advance too (Vim's default would just extend the selection).
-    vim.keymap.set("v", "<CR>", M.next, { buffer = state.active.buf })
+    -- The keymap API only accepts the charwise "v" shortname, so the
+    -- visual mapping is created via Ex. In Neovim :vnoremap covers all
+    -- three visual flavors (:gmap/:xmap are separate in Vim). The only
+    -- valid buffer-local form is bare <buffer>, issued with the scratch
+    -- buffer current.
+    local cur = vim.api.nvim_get_current_buf()
+    vim.api.nvim_set_current_buf(buf)
+    vim.cmd("vnoremap <buffer> <CR> <Cmd>lua require('vimforge.runner').next()<CR>")
+    if cur ~= buf and vim.api.nvim_buf_is_valid(cur) then
+      vim.api.nvim_set_current_buf(cur)
+    end
   else
     -- The buffer was closed by the exercise itself (e.g. :q): auto-advance.
     vim.defer_fn(function()

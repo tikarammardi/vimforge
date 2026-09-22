@@ -17,6 +17,7 @@ local BUILTINS = {
   "vimforge.lessons.word_motions",
   "vimforge.lessons.operators",
   "vimforge.lessons.text_objects",
+  "vimforge.lessons.visual_mode",
 }
 
 function M.add(lesson)
