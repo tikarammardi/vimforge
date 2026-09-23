@@ -24,7 +24,7 @@ exercises. For every exercise the plugin:
 You practice with real Vim semantics — operators, text objects, registers
 and undo all behave exactly as they would in your own files.
 
-In an exercise: `?` shows a hint, `q` quits the lesson (your buffer and
+In an exercise: `F1` shows a hint, `q` quits the lesson (your buffer and
 window are restored), `<Enter>` advances after success (also while in
 VISUAL mode).
 
@@ -38,6 +38,8 @@ VISUAL mode).
 | 4 | `operators`      | Operators         | d c y, dd d$ D, cw C, yy p, ~, u |
 | 5 | `text-objects`   | Text Objects      | di" da" ci( diw ci' dip, viw |
 | 6 | `visual-mode`    | Visual Mode       | v V <C-v>, extend, d c U on selections |
+| 7 | `searching`      | Searching         | /pattern, ?pattern, n, N |
+| 8 | `ex-commands`    | Ex Commands       | :w, :q, :wq, :s |
 
 ## Requirements
 

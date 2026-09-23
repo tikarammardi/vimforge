@@ -18,6 +18,8 @@ local BUILTINS = {
   "vimforge.lessons.operators",
   "vimforge.lessons.text_objects",
   "vimforge.lessons.visual_mode",
+  "vimforge.lessons.searching",
+  "vimforge.lessons.ex_commands",
 }
 
 function M.add(lesson)

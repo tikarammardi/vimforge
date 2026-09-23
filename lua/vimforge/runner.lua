@@ -13,7 +13,6 @@ local AUGROUP = "VimForge"
 local ns = vim.api.nvim_create_namespace("vimforge")
 
 local pending_cmd_type = nil
-local pending_cmd_line = nil
 
 local function _stop_timer()
   if state.timer then
@@ -267,18 +266,27 @@ end
 
 local function on_cmdline_enter()
   pending_cmd_type = vim.fn.getcmdtype()
-  pending_cmd_line = vim.fn.getcmdline()
 end
 
 local function on_cmdline_leave()
   -- CmdlineLeave is a fast event; defer the buffer comparison and recording.
-  local t, line = pending_cmd_type, pending_cmd_line
+  -- The command text is only complete at LEAVE (getcmdline() at Enter is
+  -- empty for a fresh ":"), so capture it here.
+  local t, line = pending_cmd_type, vim.fn.getcmdline()
+  -- Capture the current buffer now: for :q/:wq the scratch buffer is gone by
+  -- the time the deferred closure runs, so the comparison must use this.
+  -- winbufnr(0), not bufnr(0): the latter returns -1 in the CmdlineLeave
+  -- fast-event context (observed), winbufnr(0) is stable.
+  local curbuf = vim.fn.winbufnr(0)
   pending_cmd_type = nil
-  pending_cmd_line = nil
   vim.schedule(function()
-    if t == ":" and state.active.buf and vim.api.nvim_win_get_buf(0) == state.active.buf then
+    if t == ":" and state.active.buf and curbuf == state.active.buf then
       local l = (line or ""):gsub("^:", "")
-      local first = l:match("^[^%s]+")
+      -- Strip a leading range ("1,3s/a/b/" -> "s/a/b/").
+      l = l:gsub("^[%d.$][%d.,$]*", "")
+      -- The command token ends at whitespace or "/": ":s/cat/dog/" records
+      -- "s", not the whole substitution.
+      local first = l:match("^[^%s/]+")
       if first and first ~= "" then
         table.insert(state.active.commands, first)
       end
@@ -337,7 +345,7 @@ function M._panel_rows(overrides)
       rows[#rows + 1] = { text = "  " .. overrides.sub_feedback, hl = overrides.sub_feedback_hl or "VimForgeDim" }
     end
   else
-    rows[#rows + 1] = { text = "  ? hint    q quit", hl = "VimForgeDim" }
+    rows[#rows + 1] = { text = "  F1 hint   q quit", hl = "VimForgeDim" }
   end
   return rows
 end
@@ -356,6 +364,24 @@ local function _render_panel_feedback(feedback, hl, sub_feedback)
       sub_feedback = sub_feedback,
     }))
   end
+end
+
+-- A :q/:wq exercise closes the practice window when the scratch buffer was
+-- the last listed buffer: Vim closes the window instead of unlisting the
+-- buffer (the scratch survives, listed, until the next exercise deletes it).
+-- Recreate the practice window to the left of the panel and re-assert the
+-- panel width.
+local function _ensure_practice_window()
+  if state.active.practice_win and vim.api.nvim_win_is_valid(state.active.practice_win) then
+    return
+  end
+  local panel_buf = state.active.panel_buf
+  local buf = (panel_buf and vim.api.nvim_buf_is_valid(panel_buf))
+    and panel_buf or vim.api.nvim_get_current_buf()
+  local win = vim.api.nvim_open_win(buf, true, { split = "left" })
+  state.active.practice_win = win
+  pcall(vim.api.nvim_win_set_width, state.active.panel_win,
+    math.min(config.ensure().panel_width, math.floor(vim.o.columns * 0.4)))
 end
 
 -- Clears the current exercise's autocmds, extmarks, timer and temp file.
@@ -427,7 +453,16 @@ function M._on_success()
   end
   _render_panel_feedback(msg, "VimForgeSuccess", sub)
 
-  if state.active.buf and vim.api.nvim_buf_is_valid(state.active.buf) then
+  -- <CR> advances only while the learner is actually IN the scratch. A
+  -- :q/:wq exercise can end with the scratch unlisted but the practice
+  -- window alive (Vim falls back to another listed buffer), or — when the
+  -- scratch was the LAST listed buffer — the practice window CLOSED while
+  -- the scratch buffer SURVIVES listed (BufDelete never fires). In both
+  -- cases there is nothing to press <CR> in: auto-advance.
+  local in_scratch = state.active.buf
+    and vim.api.nvim_buf_is_valid(state.active.buf)
+    and vim.api.nvim_win_get_buf(0) == state.active.buf
+  if in_scratch then
     local buf = state.active.buf
     vim.keymap.set("n", "<CR>", M.next, { buffer = buf })
     -- Selection exercises succeed while still in VISUAL mode; <CR> there
@@ -436,15 +471,12 @@ function M._on_success()
     -- visual mapping is created via Ex. In Neovim :vnoremap covers all
     -- three visual flavors (:gmap/:xmap are separate in Vim). The only
     -- valid buffer-local form is bare <buffer>, issued with the scratch
-    -- buffer current.
-    local cur = vim.api.nvim_get_current_buf()
-    vim.api.nvim_set_current_buf(buf)
+    -- buffer current — which it is, since the current window displays it.
+    -- (Never force the current buffer to get here: the current window may
+    -- be the panel, and switching it would wipe the panel buffer.)
     vim.cmd("vnoremap <buffer> <CR> <Cmd>lua require('vimforge.runner').next()<CR>")
-    if cur ~= buf and vim.api.nvim_buf_is_valid(cur) then
-      vim.api.nvim_set_current_buf(cur)
-    end
   else
-    -- The buffer was closed by the exercise itself (e.g. :q): auto-advance.
+    -- The exercise closed or unlisted its own buffer (e.g. :q): auto-advance.
     vim.defer_fn(function()
       M.next()
     end, 900)
@@ -453,6 +485,7 @@ end
 
 function M.start_exercise(exercise)
   M._teardown_exercise()
+  _ensure_practice_window()
 
   local lesson = state.active.lesson
   state.active.exercise = exercise
@@ -505,7 +538,9 @@ function M.start_exercise(exercise)
   end
 
   _render_panel()
-  vim.keymap.set("n", "?", M.hint, { buffer = buf })
+  -- F1 (Vim's canonical help key), not "?": the latter is a real Vim key
+  -- (backward search) that exercises may need.
+  vim.keymap.set("n", "<F1>", M.hint, { buffer = buf })
   vim.keymap.set("n", "q", M.quit, { buffer = buf })
   _setup_sequence(exercise)
   -- _setup_autocmds clears AUGROUP, so the anchor recorder must be created

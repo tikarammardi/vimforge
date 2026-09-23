@@ -21,7 +21,7 @@ behave exactly as they would in your own files. Progress is stored locally
 as JSON (|vimforge-config|) — no network, no accounts.
 
 Inside an exercise:
-  ?       show a hint
+  F1      show a hint
   q       quit the lesson (window/buffer are restored)
   <Enter> advance after success (works in VISUAL mode too)
 
@@ -54,6 +54,8 @@ Built-in lessons: ~
   4. operators        Operators (d c y, dd d$ D, cw C, yy p, ~, u)
   5. text-objects     Text Objects (di" da" ci( diw ci' dip, viw)
   6. visual-mode      Visual Mode (v V <C-v>, extend, d c U on selections)
+  7. searching        Searching (/pattern, ?pattern, n, N)
+  8. ex-commands      Ex Commands (:w, :q, :wq, :s)
 
 ==============================================================================
 3. Configuration                                             *vimforge-config*

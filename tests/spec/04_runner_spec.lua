@@ -94,6 +94,69 @@ describe("runner e2e", function()
       vim.api.nvim_buf_get_lines(user_buf, 0, -1, false))
   end)
 
+  it("auto-advances when :q closes the practice window (last listed buffer)", function()
+    -- before_each's "user" buffer must not survive as a listed fallback:
+    -- empty it so the first scratch reuses it and stays the last listed
+    -- buffer (the fresh-nvim condition). Then :q closes the practice
+    -- window while the scratch buffer SURVIVES listed — the runner must
+    -- auto-advance (no <CR> possible) and rebuild a practice window.
+    vim.api.nvim_buf_set_lines(user_buf, 0, -1, false, {})
+    vim.bo[user_buf].modified = false
+
+    runner.start("ex-commands")
+    assert.are.equal("active", state.active.status)
+    local lesson = registry.get("ex-commands")
+
+    -- ex1 :w: buffer stays, <CR> advances.
+    feed(lesson.exercises[1].solution.keys)
+    assert.is_true(wait_for(function()
+      return state.active.status == "success"
+    end), "ex1 did not succeed")
+    feed("\r")
+    assert.is_true(wait_for(function()
+      return state.active.status == "active"
+    end), "ex1 did not advance")
+
+    -- ex2 :q: practice window closes; the runner must auto-advance.
+    feed(lesson.exercises[2].solution.keys)
+    assert.is_true(wait_for(function()
+      return state.active.status == "success"
+    end), "ex2 did not succeed")
+    assert.is_false(vim.api.nvim_win_is_valid(state.active.practice_win),
+      ":q should have closed the practice window")
+    assert.is_true(wait_for(function()
+      return state.active.status == "active"
+    end, 3000), "did not auto-advance past :q")
+    assert.are.equal(lesson.exercises[3].id, state.active.exercise.id)
+    assert.is_true(vim.api.nvim_win_is_valid(state.active.practice_win),
+      "no practice window after auto-advance")
+    assert.is_true(vim.api.nvim_buf_is_valid(state.active.panel_buf),
+      "panel buffer was destroyed")
+
+    -- ex3 :wq: same close flow.
+    feed(lesson.exercises[3].solution.keys)
+    assert.is_true(wait_for(function()
+      return state.active.status == "success"
+    end), "ex3 did not succeed")
+    assert.is_true(wait_for(function()
+      return state.active.status == "active"
+    end, 3000), "did not auto-advance past :wq")
+    assert.are.equal(lesson.exercises[4].id, state.active.exercise.id)
+
+    -- ex4: normal <CR> completion.
+    feed(lesson.exercises[4].solution.keys)
+    assert.is_true(wait_for(function()
+      return state.active.status == "success"
+    end), "ex4 did not succeed")
+    feed("\r")
+    assert.is_true(wait_for(function()
+      return state.active.status == "idle"
+    end, 3000), "lesson did not complete")
+    local data = progress.load()
+    assert.is_true(data.lessons["ex-commands"].completed,
+      "lesson was not marked complete")
+  end)
+
   it("does not leak scratch buffers or autocmds after quit", function()
     runner.start("intro-to-modes")
     assert.is_true(wait_for(function()
