@@ -28,6 +28,10 @@ M.active = {
   panel_buf = nil,
   -- window that displays the scratch (practice) buffer
   practice_win = nil,
+  -- active practice session (nil when not practicing); owned by practice.lua
+  practice = nil,
+  -- uv timestamp of the current task start (practice timing)
+  task_started = nil,
   -- window/buffer to restore on exit
   prev_win = nil,
   prev_buf = nil,
@@ -49,6 +53,7 @@ local function clear_exercise()
   M.active.buf = nil
   M.active.temp_file = nil
   M.active.extmarks = {}
+  M.active.task_started = nil
 end
 
 function M.reset_exercise()
@@ -61,6 +66,7 @@ function M.reset_all()
   M.active.panel_win = nil
   M.active.panel_buf = nil
   M.active.practice_win = nil
+  M.active.practice = nil
   M.active.prev_win = nil
   M.active.prev_buf = nil
   clear_exercise()

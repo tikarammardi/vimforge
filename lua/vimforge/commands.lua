@@ -31,6 +31,37 @@ function M.define()
     require("vimforge").restart()
   end, {})
 
+  vim.api.nvim_create_user_command("VimForgePractice", function(opts)
+    -- Args: "<category> [mode]"; no args opens the chooser.
+    local args = (opts.args or ""):match("^%s*(.-)%s*$")
+    if args == "" then
+      require("vimforge").practice()
+      return
+    end
+    local category, mode = args:match("^(%S+)%s+(%S+)$")
+    if category and mode then
+      require("vimforge").practice({ category = category, mode = mode })
+    else
+      require("vimforge").practice({ category = args })
+    end
+  end, {
+    nargs = "?",
+    complete = function()
+      local practice = require("vimforge.practice")
+      local out = {}
+      for _, cat in ipairs(practice.CATEGORIES) do
+        for _, mode in ipairs(practice.MODES) do
+          out[#out + 1] = cat .. " " .. mode
+        end
+      end
+      return out
+    end,
+  })
+
+  vim.api.nvim_create_user_command("VimForgeStats", function()
+    require("vimforge").stats()
+  end, {})
+
   vim.api.nvim_create_user_command("VimForgeProgress", function()
     require("vimforge").show_progress()
   end, {})

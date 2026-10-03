@@ -54,6 +54,21 @@ function M.quit()
   require("vimforge.runner").quit()
 end
 
+-- Start a practice session. opts: { category, mode, goal, limit_ms } or
+-- nil for the chooser float.
+function M.practice(opts)
+  local practice = require("vimforge.practice")
+  if opts then
+    practice.start(opts)
+  else
+    practice.choose()
+  end
+end
+
+function M.stats()
+  require("vimforge.stats").show()
+end
+
 function M.show_progress()
   local lessons = require("vimforge.lessons")
   local progress = require("vimforge.progress")

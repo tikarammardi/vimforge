@@ -282,7 +282,8 @@ local function on_cmdline_leave()
   vim.schedule(function()
     if t == ":" and state.active.buf and curbuf == state.active.buf then
       local l = (line or ""):gsub("^:", "")
-      -- Strip a leading range ("1,3s/a/b/" -> "s/a/b/").
+      -- Strip a leading range ("%s/a/b/" -> "s/a/b/", "1,3s/a/b/" -> "s/a/b/").
+      l = l:gsub("^%%", "")
       l = l:gsub("^[%d.$][%d.,$]*", "")
       -- The command token ends at whitespace or "/": ":s/cat/dog/" records
       -- "s", not the whole substitution.
@@ -328,10 +329,23 @@ function M._panel_rows(overrides)
       rows[#rows + 1] = { text = "  " .. line, hl = "VimForgeDim" }
     end
   end
-  rows[#rows + 1] = {
-    text = string.format("Exercise %d of %d", state.active.exercise_index, #lesson.exercises),
-    hl = "VimForgeProgress",
-  }
+  local progress_line
+  local p = state.active.practice
+  if p then
+    if p.mode == "goal" then
+      progress_line = string.format("Task %d — goal %d", p.done + 1, p.goal)
+    elseif p.mode == "time" then
+      local left = p.limit_ms
+        and math.max(0, math.ceil((p.limit_ms - (vim.uv.now() - p.started_ms)) / 1000))
+        or 0
+      progress_line = string.format("Task %d — %ds left", p.done + 1, left)
+    else
+      progress_line = string.format("Task %d — score %d", p.done + 1, p.done)
+    end
+  else
+    progress_line = string.format("Exercise %d of %d", state.active.exercise_index, #lesson.exercises)
+  end
+  rows[#rows + 1] = { text = progress_line, hl = "VimForgeProgress" }
   rows[#rows + 1] = { text = "" }
   for _, line in ipairs(ui.wrap(ex.instruction, w)) do
     rows[#rows + 1] = { text = "  " .. line, hl = "VimForgeInstruction" }
@@ -426,6 +440,9 @@ function M._quit_cleanup()
   state.active.lesson = nil
   state.active.lesson_id = nil
   state.active.status = "idle"
+  if state.active.practice then
+    require("vimforge.practice").cleanup()
+  end
 end
 
 function M._on_success()
@@ -436,10 +453,14 @@ function M._on_success()
   state.active.status = "success"
   local lesson = state.active.lesson
   local ex = state.active.exercise
-  progress.record_exercise(lesson.id, ex.id, {
-    attempts = state.active.attempts,
-    hints = state.active.hints_shown,
-  })
+  if state.active.practice then
+    require("vimforge.practice").record_done(state.active)
+  else
+    progress.record_exercise(lesson.id, ex.id, {
+      attempts = state.active.attempts,
+      hints = state.active.hints_shown,
+    })
+  end
   _clear_extmarks()
 
   local is_last = state.active.exercise_index >= #lesson.exercises
@@ -462,7 +483,12 @@ function M._on_success()
   local in_scratch = state.active.buf
     and vim.api.nvim_buf_is_valid(state.active.buf)
     and vim.api.nvim_win_get_buf(0) == state.active.buf
-  if in_scratch then
+  if state.active.practice then
+    -- Practice drills flow continuously: no <CR> between tasks.
+    vim.defer_fn(function()
+      M.next()
+    end, 250)
+  elseif in_scratch then
     local buf = state.active.buf
     vim.keymap.set("n", "<CR>", M.next, { buffer = buf })
     -- Selection exercises succeed while still in VISUAL mode; <CR> there
@@ -539,26 +565,27 @@ function M.start_exercise(exercise)
 
   _render_panel()
   -- F1 (Vim's canonical help key), not "?": the latter is a real Vim key
-  -- (backward search) that exercises may need.
+  -- (backward search) that exercises may need. Selection exercises leave the
+  -- learner in VISUAL mode, where the hint must still be reachable: in
+  -- Neovim the "v" mapping mode covers all three visual flavors.
   vim.keymap.set("n", "<F1>", M.hint, { buffer = buf })
+  vim.keymap.set("v", "<F1>", M.hint, { buffer = buf })
   vim.keymap.set("n", "q", M.quit, { buffer = buf })
   _setup_sequence(exercise)
   -- _setup_autocmds clears AUGROUP, so the anchor recorder must be created
   -- after it.
   _setup_autocmds(buf)
   _setup_visual_anchor(exercise)
+  state.active.task_started = vim.uv.now()
   schedule_check()
 end
 
--- Starts a lesson from its first incomplete exercise (or the first one).
-function M.start(lesson_id)
+-- Opens the panel and practice window and records the learner's own
+-- window/buffer. Shared by lesson sessions and practice sessions (which
+-- pass a synthetic lesson).
+function M._begin_session(lesson)
   config.ensure()
   ui.setup_highlights()
-  local lesson = lessons.get(lesson_id)
-  if not lesson then
-    vim.notify("vimforge: unknown lesson '" .. tostring(lesson_id) .. "'", vim.log.levels.ERROR)
-    return
-  end
   -- Close any open selector from a previous run.
   if state.active.selector_win and vim.api.nvim_win_is_valid(state.active.selector_win) then
     vim.api.nvim_win_close(state.active.selector_win, true)
@@ -581,6 +608,16 @@ function M.start(lesson_id)
     -- window so the practice buffer opens there.
     vim.api.nvim_set_current_win(state.active.prev_win)
   end
+end
+
+-- Starts a lesson from its first incomplete exercise (or the first one).
+function M.start(lesson_id)
+  local lesson = lessons.get(lesson_id)
+  if not lesson then
+    vim.notify("vimforge: unknown lesson '" .. tostring(lesson_id) .. "'", vim.log.levels.ERROR)
+    return
+  end
+  M._begin_session(lesson)
 
   local start_idx = 1
   for i, ex in ipairs(lesson.exercises) do
@@ -608,6 +645,10 @@ function M.next()
   end
   local lesson = state.active.lesson
   local idx = state.active.exercise_index
+  if state.active.practice then
+    require("vimforge.practice").advance()
+    return
+  end
   if idx < #lesson.exercises then
     M.start_exercise(lesson.exercises[idx + 1])
   else
@@ -678,6 +719,13 @@ function M.selector()
         hl = hl,
       }
     end
+    local pselected = (selected == #all + 1)
+    rows[#rows + 1] = { text = "" }
+    rows[#rows + 1] = {
+      text = string.format("  %s P. Practice — drill skills (goal / time / endless)",
+        (pselected) and "▶" or " "),
+      hl = pselected and "VimForgeSelected" or "VimForgeProgress",
+    }
     rows[#rows + 1] = { text = "" }
     rows[#rows + 1] = { text = string.format("  Progress: %d%%", progress.percent()), hl = "VimForgeProgress" }
     rows[#rows + 1] = { text = "" }
@@ -685,6 +733,7 @@ function M.selector()
     return rows
   end
 
+  local last = #all + 1
   local selected = 1
   local win, buf = ui.show_selector(build_rows(selected))
   state.active.selector_win = win
@@ -697,7 +746,7 @@ function M.selector()
   end
 
   vim.keymap.set("n", "j", function()
-    selected = math.min(#all, selected + 1)
+    selected = math.min(last, selected + 1)
     redraw()
   end, { buffer = buf })
   vim.keymap.set("n", "k", function()
@@ -705,6 +754,10 @@ function M.selector()
     redraw()
   end, { buffer = buf })
   vim.keymap.set("n", "<CR>", function()
+    if selected > #all then
+      require("vimforge.practice").choose()
+      return
+    end
     M._quit_cleanup()
     M.start(all[selected].id)
   end, { buffer = buf })

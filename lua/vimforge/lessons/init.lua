@@ -20,6 +20,10 @@ local BUILTINS = {
   "vimforge.lessons.visual_mode",
   "vimforge.lessons.searching",
   "vimforge.lessons.ex_commands",
+  "vimforge.lessons.insert_advanced",
+  "vimforge.lessons.copy_paste",
+  "vimforge.lessons.dot_repeat",
+  "vimforge.lessons.marks_jumps",
 }
 
 function M.add(lesson)

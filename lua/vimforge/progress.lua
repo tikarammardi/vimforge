@@ -103,6 +103,29 @@ function M.reset_all()
   end
 end
 
+-- Practice stats live under data.practice:
+--   { [category] = { completed, total_ms, best_ms } }
+function M.record_practice(category, ms)
+  local data = M.load()
+  data.practice = data.practice or {}
+  local c = data.practice[category] or { completed = 0, total_ms = 0, best_ms = nil }
+  c.completed = (c.completed or 0) + 1
+  c.total_ms = (c.total_ms or 0) + (ms or 0)
+  if ms and (c.best_ms == nil or ms < c.best_ms) then
+    c.best_ms = ms
+  end
+  data.practice[category] = c
+  if persist() then
+    M.save(data)
+  end
+  return data
+end
+
+function M.practice_stats()
+  local data = M.load()
+  return data.practice or {}
+end
+
 -- Percentage of all exercises completed across every registered lesson.
 function M.percent()
   local registry = require("vimforge.lessons")

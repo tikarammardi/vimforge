@@ -2,10 +2,11 @@
 
 1. Introduction                                  |vimforge-intro|
 2. Commands                                      |vimforge-commands|
-3. Configuration                                 |vimforge-config|
-4. Lua API                                       |vimforge-api|
-5. Writing lessons                               |vimforge-lessons|
-6. Development                                   |vimforge-dev|
+3. Practice                                      |vimforge-practice|
+4. Configuration                                 |vimforge-config|
+5. Lua API                                       |vimforge-api|
+6. Writing lessons                               |vimforge-lessons|
+7. Development                                   |vimforge-dev|
 
 ==============================================================================
 1. Introduction                                                 *vimforge-intro*
@@ -41,10 +42,20 @@ Inside an exercise:
                                                  *:VimForgeRestart*
 :VimForgeRestart     Restart the current exercise.
 
-                                               *:VimForgeProgress*
+                                           *:VimForgePractice*
+:VimForgePractice          Open the practice chooser.
+:VimForgePractice [cat]    Start practice in that category (movement,
+                           insertion, editing, text-objects, visual).
+:VimForgePractice c [m]    Start practice with category + mode
+                           (goal, time, endless). Completion is enabled.
+
+                                                    *:VimForgeStats*
+:VimForgeStats             Show lesson completion and practice stats.
+
+                                                *:VimForgeProgress*
 :VimForgeProgress    Show progress per lesson and the overall percentage.
 
-                                                   *:VimForgeReset*
+                                                    *:VimForgeReset*
 :VimForgeReset       Clear all saved progress.
 
 Built-in lessons: ~
@@ -56,9 +67,29 @@ Built-in lessons: ~
   6. visual-mode      Visual Mode (v V <C-v>, extend, d c U on selections)
   7. searching        Searching (/pattern, ?pattern, n, N)
   8. ex-commands      Ex Commands (:w, :q, :wq, :s)
+  9. insert-advanced  Inserting Like a Pro (I, A, O, s, r, S)
+  10. copy-paste      Copy and Paste (yy p, P, yw, named registers, cut)
+  11. dot-repeat      The Dot Command (., 2. / 3., repeat insertions)
+  12. marks-jumps     Marks and Jumps (ma / `a, <C-o>, <C-i>)
 
 ==============================================================================
-3. Configuration                                             *vimforge-config*
+3. Practice                                                 *vimforge-practice*
+
+Practice drills random tasks from a skill pool — 40 tasks across five
+categories (movement, insertion, editing, text objects, visual). Pick a
+category and a mode:
+
+  goal      complete 10 tasks
+  time      as many as you can in 60 seconds
+  endless   until you quit with q
+
+Tasks flow back to back with auto-advance (no <Enter> between them). The
+panel shows the task number, goal progress or time remaining. |:VimForgeStats|
+shows per-category done / average / best times. Everything is local and
+free — there is no paywall.
+
+==============================================================================
+4. Configuration                                             *vimforge-config*
 
 All options have defaults; setup is optional. >
 
@@ -71,10 +102,11 @@ All options have defaults; setup is optional. >
     })
 <
 Progress is stored at <data_dir>/progress.json as plain JSON, tracking
-completed lessons/exercises with attempt and hint counts.
+completed lessons/exercises with attempt and hint counts, plus per-category
+practice stats (completed tasks, total/best time).
 
 ==============================================================================
-4. Lua API                                                        *vimforge-api*
+5. Lua API                                                        *vimforge-api*
 
 require("vimforge").setup(opts)   Configure (defaults work without it).
 require("vimforge").open()        Open the lesson selector.
@@ -82,11 +114,14 @@ require("vimforge").start(id?)    Start a lesson (default: first not done).
 require("vimforge").next()        Advance to the next exercise.
 require("vimforge").restart()     Restart the current exercise.
 require("vimforge").quit()        Leave the lesson, restore the window.
+require("vimforge").practice(opts?)  Practice (chooser when opts is nil;
+                      opts = { category, mode, goal, limit_ms }).
+require("vimforge").stats()       Show the stats float.
 require("vimforge").show_progress()  Show a progress summary.
 require("vimforge").reset()       Clear all saved progress.
 
 ==============================================================================
-5. Writing lessons                                             *vimforge-lessons*
+6. Writing lessons                                             *vimforge-lessons*
 
 A lesson is a declarative table in lua/vimforge/lessons/<id>.lua, registered
 in the BUILTINS list in lua/vimforge/lessons/init.lua: >
@@ -130,7 +165,7 @@ replays every solution through the real engine (feedkeys) and asserts the
 validator passes, so each lesson is verified against actual Neovim semantics.
 
 ==============================================================================
-6. Development                                                     *vimforge-dev*
+7. Development                                                     *vimforge-dev*
 
     make test       # plenary suite (plenary.nvim required; PLENARY=/path)
     make play       # open the plugin in a clean nvim

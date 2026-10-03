@@ -30,16 +30,35 @@ VISUAL mode).
 
 ## Curriculum
 
-| # | Lesson id      | Title             | Focus |
-|---|----------------|-------------------|-------|
-| 1 | `intro-to-modes` | Introduction to Modes | i, a, o, Esc |
-| 2 | `moving-around`  | Moving Around     | h j k l, 0 $, gg G, counts |
-| 3 | `word-motions`   | Word Motions      | w b e, W B, f t ; |
-| 4 | `operators`      | Operators         | d c y, dd d$ D, cw C, yy p, ~, u |
-| 5 | `text-objects`   | Text Objects      | di" da" ci( diw ci' dip, viw |
-| 6 | `visual-mode`    | Visual Mode       | v V <C-v>, extend, d c U on selections |
-| 7 | `searching`      | Searching         | /pattern, ?pattern, n, N |
-| 8 | `ex-commands`    | Ex Commands       | :w, :q, :wq, :s |
+| # | Lesson id          | Title                 | Focus |
+|---|--------------------|-----------------------|-------|
+| 1 | `intro-to-modes`   | Introduction to Modes | i, a, o, Esc |
+| 2 | `moving-around`    | Moving Around         | h j k l, 0 $, gg G, counts |
+| 3 | `word-motions`     | Word Motions          | w b e, W B, f t ; |
+| 4 | `operators`        | Operators             | d c y, dd d$ D, cw C, yy p, ~, u |
+| 5 | `text-objects`     | Text Objects          | di" da" ci( diw ci' dip, viw |
+| 6 | `visual-mode`      | Visual Mode           | v V <C-v>, extend, d c U on selections |
+| 7 | `searching`        | Searching             | /pattern, ?pattern, n, N |
+| 8 | `ex-commands`      | Ex Commands           | :w, :q, :wq, :s |
+| 9 | `insert-advanced`  | Inserting Like a Pro  | I, A, O, s, r, S |
+| 10 | `copy-paste`       | Copy and Paste        | yy p, P, yw, named registers, cut |
+| 11 | `dot-repeat`       | The Dot Command       | ., 2. / 3., repeat insertions |
+| 12 | `marks-jumps`      | Marks and Jumps       | ma / `a, <C-o>, <C-i> |
+
+## Practice
+
+`P` in the selector (or `:VimForgePractice`) drills random tasks from a
+skill pool — 40 tasks across five categories: movement, insertion,
+editing, text objects, and visual. Pick a category and a mode:
+
+- **goal** — complete 10 tasks
+- **time** — as many as you can in 60 seconds
+- **endless** — until you quit with `q`
+
+Tasks flow back to back with auto-advance (no `<Enter>`), the panel shows
+your task number, goal progress or time left, and `:VimForgeStats` shows
+per-category done / average / best times alongside lesson completion.
+Everything is local and free — there is no paywall to unlock.
 
 ## Requirements
 
@@ -68,14 +87,16 @@ Then run `:VimForge` (or `:VimForgeStart <lesson-id>`).
 
 ## Commands
 
-| Command                | Description |
-|------------------------|-------------|
-| `:VimForge`            | Open the lesson selector |
-| `:VimForgeStart [id]`  | Start a lesson by id (default: first incomplete) |
-| `:VimForgeNext`        | Advance to the next exercise |
-| `:VimForgeRestart`     | Restart the current exercise |
-| `:VimForgeProgress`    | Show progress per lesson + overall % |
-| `:VimForgeReset`       | Clear all saved progress |
+| Command                          | Description |
+|----------------------------------|-------------|
+| `:VimForge`                      | Open the lesson selector (includes a Practice entry) |
+| `:VimForgeStart [id]`            | Start a lesson by id (default: first incomplete) |
+| `:VimForgeNext`                  | Advance to the next exercise |
+| `:VimForgeRestart`               | Restart the current exercise |
+| `:VimForgePractice [cat] [mode]` | Start practice (chooser if no args; `cat` = movement/insertion/editing/text-objects/visual, `mode` = goal/time/endless) |
+| `:VimForgeStats`                 | Lesson completion + practice stats float |
+| `:VimForgeProgress`              | Show progress per lesson + overall % |
+| `:VimForgeReset`                 | Clear all saved progress |
 
 ## Configuration
 
@@ -93,7 +114,8 @@ require("vimforge").setup({
 
 Progress is stored as plain JSON at `<data_dir>/progress.json`
 (default `~/.local/share/nvim/vimforge/progress.json` on Linux/macOS),
-tracking completed lessons/exercises with attempt and hint counts.
+tracking completed lessons/exercises with attempt and hint counts, plus
+per-category practice stats (completed tasks, total/best time).
 
 ## Writing lessons
 
@@ -164,6 +186,8 @@ lua/vimforge/
   validator.lua            pure validation functions over a state snapshot
   progress.lua             durable progress (JSON)
   runner.lua               exercise state machine, events, panel wiring
+  practice.lua             practice skill pool + session modes
+  stats.lua                stats float
   ui.lua                   panel, selector, highlights, extmarks
   commands.lua             :VimForge* user commands
   lessons/                 the curriculum (one module per lesson)
