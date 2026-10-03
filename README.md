@@ -76,7 +76,7 @@ With [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
 {
-  "tikarammardi/vim-hero",
+  "tikarammardi/vimforge",
   config = true, -- or: opts = { auto_start = true }
 }
 ```
@@ -84,7 +84,7 @@ With [lazy.nvim](https://github.com/folke/lazy.nvim):
 Or with a plain runtimepath:
 
 ```sh
-git clone https://github.com/tikarammardi/vim-hero ~/.local/share/nvim/site/pack/plugins/start/vimforge
+git clone https://github.com/tikarammardi/vimforge ~/.local/share/nvim/site/pack/plugins/start/vimforge
 ```
 
 Then run `:VimForge` (or `:VimForgeStart <lesson-id>`).

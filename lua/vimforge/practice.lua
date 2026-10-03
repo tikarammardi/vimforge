@@ -1,4 +1,4 @@
--- Practice: drill random tasks from a skill pool, vim-hero style.
+-- Practice: drill random tasks from a skill pool, vimforge style.
 --
 -- A task is an exercise (same schema as lesson exercises) plus a .category.
 -- A session runs tasks back to back with auto-advance, in one of three
