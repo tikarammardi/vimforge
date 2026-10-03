@@ -44,11 +44,15 @@ VISUAL mode).
 | 10 | `copy-paste`       | Copy and Paste        | yy p, P, yw, named registers, cut |
 | 11 | `dot-repeat`       | The Dot Command       | ., 2. / 3., repeat insertions |
 | 12 | `marks-jumps`      | Marks and Jumps       | ma / `a, <C-o>, <C-i> |
+| 13 | `quick-search`     | Quick Word Search     | *, #, n / N on words |
+| 14 | `brackets`         | Text Objects: Brackets | di{ da{ ci{ ca{, di[ |
+| 15 | `change-case`      | Change Case           | guw, gUw, gU$, gug$, gui( |
+| 16 | `substitute-advanced` | Substitution and :g | :s///g, :%s, :2s, :g/pat/d |
 
 ## Practice
 
 `P` in the selector (or `:VimForgePractice`) drills random tasks from a
-skill pool — 40 tasks across five categories: movement, insertion,
+skill pool — 47 tasks across five categories: movement, insertion,
 editing, text objects, and visual. Pick a category and a mode:
 
 - **goal** — complete 10 tasks

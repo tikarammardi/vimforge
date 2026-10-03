@@ -1,0 +1,73 @@
+return {
+  id = "change-case",
+  title = "Change Case",
+  summary = "gu and gU change the case of whatever a motion or text object covers.",
+  concept = "U and ~ change the case of a selection or a single character, but the g-prefixed versions work with any motion: gU uppercases, gu lowercases. Pair them with w (word), $ (line end), g$ (visual line end), or a text object like i( for surgical case changes — no visual selection needed.",
+  exercises = {
+    {
+      id = "lowercase-word-with-guw",
+      instruction = "With the cursor on 'M', lowercase the whole word with guw.",
+      initial_content = { "MAKE IT LOUD" },
+      cursor = { 1, 0 },
+      validation = { type = "buffer", expected = { "make IT LOUD" } },
+      success_message = "guw lowercases from the cursor to the end of the word.",
+      hints = {
+        "Type g, u, w.",
+        "gU is the uppercase twin.",
+      },
+      solution = { keys = "guw", text = "Type guw." },
+    },
+    {
+      id = "uppercase-word-with-gUw",
+      instruction = "With the cursor on the 'i' of 'is', uppercase that word with gUw.",
+      initial_content = { "this is quiet" },
+      cursor = { 1, 5 },
+      validation = { type = "buffer", expected = { "this IS quiet" } },
+      success_message = "gUw uppercases a single word, leaving the rest alone.",
+      hints = {
+        "Type g, U, w.",
+        "The motion after gU decides how much changes.",
+      },
+      solution = { keys = "gUw", text = "Type gUw." },
+    },
+    {
+      id = "uppercase-to-end-with-gU$",
+      instruction = "With the cursor at the start of the line, uppercase everything to the end of the line with gU$.",
+      initial_content = { "make this LOUD" },
+      cursor = { 1, 0 },
+      validation = { type = "buffer", expected = { "MAKE THIS LOUD" } },
+      success_message = "gU$ uppercases from the cursor to the line end.",
+      hints = {
+        "Type g, U, and the $ key.",
+        "$ is just a motion — gU works with any of them.",
+      },
+      solution = { keys = "gU$", text = "Type gU$." },
+    },
+    {
+      id = "lowercase-whole-line-with-gug$",
+      instruction = "With the cursor at the start of the line, lowercase the whole line with gug$.",
+      initial_content = { "SCREAMING HEADLINE" },
+      cursor = { 1, 0 },
+      validation = { type = "buffer", expected = { "screaming headline" } },
+      success_message = "gug$ lowercases the line — a calm headline.",
+      hints = {
+        "Type g, u, g, $.",
+        "The second g makes $ count as a motion after gu.",
+      },
+      solution = { keys = "gug$", text = "Type gug$." },
+    },
+    {
+      id = "lowercase-inside-parens",
+      instruction = "With the cursor on the '(', lowercase what is inside the parentheses with gui(.",
+      initial_content = { "do (SHOUT)" },
+      cursor = { 1, 4 },
+      validation = { type = "buffer", expected = { "do (shout)" } },
+      success_message = "gui( combines a case change with a text object.",
+      hints = {
+        "Type g, u, i, and the open parenthesis.",
+        "Text objects are motions too — gu/gU accept them.",
+      },
+      solution = { keys = "gui(", text = "Type gui(." },
+    },
+  },
+}

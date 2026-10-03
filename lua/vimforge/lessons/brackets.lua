@@ -1,0 +1,73 @@
+return {
+  id = "brackets",
+  title = "Text Objects: Brackets",
+  summary = "di{ da{ ci{ ca{ and di[ operate on brace and bracket pairs.",
+  concept = "Text objects work on any bracket pair: { } for braces, [ ] for brackets, ( ) for parentheses. i means inside (keep the brackets), a means around (include them). They work across lines, which is perfect for code: di{ clears a function body, ci{ rewrites a block, da[ drops an array's brackets and contents.",
+  exercises = {
+    {
+      id = "delete-inside-braces",
+      instruction = "With the cursor on the '{', delete the inside of the braces (keep the braces) with di{.",
+      initial_content = { "x = {1, 2, 3};" },
+      cursor = { 1, 4 },
+      validation = { type = "buffer", expected = { "x = {};" } },
+      success_message = "di{ deletes the content inside a brace pair.",
+      hints = {
+        "Type d, i, and the open brace key.",
+        "The braces themselves survive — that is 'inside'.",
+      },
+      solution = { keys = "di{", text = "Type di{." },
+    },
+    {
+      id = "delete-around-braces",
+      instruction = "With the cursor on the '{', delete the braces AND their content with da{.",
+      initial_content = { "x = {1};" },
+      cursor = { 1, 4 },
+      validation = { type = "buffer", expected = { "x = ;" } },
+      success_message = "da{ deletes the brace pair plus its content.",
+      hints = {
+        "Type d, a, and the open brace key.",
+        "This time the braces go too — that is 'around'.",
+      },
+      solution = { keys = "da{", text = "Type da{." },
+    },
+    {
+      id = "change-inside-braces",
+      instruction = "With the cursor on the '{', change what is inside with ci{: type 'b: 2', then <Esc>.",
+      initial_content = { "return {a: 1};" },
+      cursor = { 1, 7 },
+      validation = { type = "buffer", expected = { "return {b: 2};" } },
+      success_message = "ci{ deletes the inside and opens INSERT mode at its start.",
+      hints = {
+        "Type c, i, {, then 'b: 2' and <Esc>.",
+        "The opening brace stays put; the content is replaced.",
+      },
+      solution = { keys = "ci{b: 2<Esc>", text = "Type ci{, type 'b: 2', press <Esc>." },
+    },
+    {
+      id = "change-around-braces",
+      instruction = "With the cursor on the '{', replace the braces and their content with ca{: type 'z', then <Esc>.",
+      initial_content = { "do {x} now" },
+      cursor = { 1, 3 },
+      validation = { type = "buffer", expected = { "do z now" } },
+      success_message = "ca{ replaces the whole brace pair in one motion.",
+      hints = {
+        "Type c, a, {, then 'z' and <Esc>.",
+        "The {x} block becomes whatever you type.",
+      },
+      solution = { keys = "ca{z<Esc>", text = "Type ca{, type 'z', press <Esc>." },
+    },
+    {
+      id = "delete-inside-brackets",
+      instruction = "With the cursor on the '[', empty the array (keep the brackets) with di[.",
+      initial_content = { "arr = [1, 2];" },
+      cursor = { 1, 6 },
+      validation = { type = "buffer", expected = { "arr = [];" } },
+      success_message = "di[ works on brackets exactly like it does on braces.",
+      hints = {
+        "Type d, i, and the open bracket key.",
+        "Every bracket pair is a text object: {}, [], () and more.",
+      },
+      solution = { keys = "di[", text = "Type di[." },
+    },
+  },
+}

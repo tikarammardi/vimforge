@@ -24,6 +24,10 @@ local BUILTINS = {
   "vimforge.lessons.copy_paste",
   "vimforge.lessons.dot_repeat",
   "vimforge.lessons.marks_jumps",
+  "vimforge.lessons.quick_search",
+  "vimforge.lessons.brackets",
+  "vimforge.lessons.change_case",
+  "vimforge.lessons.substitute_advanced",
 }
 
 function M.add(lesson)

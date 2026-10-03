@@ -1,0 +1,60 @@
+return {
+  id = "quick-search",
+  title = "Quick Word Search",
+  summary = "* and # jump to the next/previous occurrence of the word under the cursor.",
+  concept = "Instead of typing /word, let Vim pick the word for you: * searches forward for the word under the cursor, # searches backward. Both match the whole word (no partial matches), and n / N keep jumping between occurrences like any other search.",
+  exercises = {
+    {
+      id = "search-word-forward-with-star",
+      instruction = "With the cursor on the first 'cat', press * to jump to the next occurrence.",
+      initial_content = { "cat dog cat" },
+      cursor = { 1, 0 },
+      validation = { type = "cursor_position", position = { 1, 8 } },
+      success_message = "* searches forward for the word under the cursor.",
+      hints = {
+        "Press the * key (Shift-8).",
+        "No slash, no typing the word — Vim uses what is under the cursor.",
+      },
+      solution = { keys = "*", text = "Press *." },
+    },
+    {
+      id = "search-word-backward-with-hash",
+      instruction = "With the cursor on the last 'cat', press # to jump to the previous occurrence.",
+      initial_content = { "cat dog cat" },
+      cursor = { 1, 10 },
+      validation = { type = "cursor_position", position = { 1, 0 } },
+      success_message = "# is the backward twin of *.",
+      hints = {
+        "Press the # key (Shift-3).",
+        "It jumps to the previous whole-word match, wrapping around.",
+      },
+      solution = { keys = "#", text = "Press #." },
+    },
+    {
+      id = "repeat-quick-search-with-n",
+      instruction = "From the first 'one', jump to the next with *, then to the one after that with n.",
+      initial_content = { "one two one one" },
+      cursor = { 1, 0 },
+      validation = { type = "cursor_position", position = { 1, 12 } },
+      success_message = "n / N repeat a * or # search exactly like / and ?.",
+      hints = {
+        "Type *, then n.",
+        "Each n lands on the next whole-word match.",
+      },
+      solution = { keys = "*n", text = "Press *, then n." },
+    },
+    {
+      id = "star-uses-word-boundaries",
+      instruction = "From the first 'cat', press *. The match must skip 'catalogue' — only a whole word counts.",
+      initial_content = { "cat catalogue cat" },
+      cursor = { 1, 0 },
+      validation = { type = "cursor_position", position = { 1, 14 } },
+      success_message = "* matches whole words only, so 'catalogue' is skipped.",
+      hints = {
+        "Press * and watch where it lands.",
+        "Word boundaries are part of the match, even though you never typed them.",
+      },
+      solution = { keys = "*", text = "Press *." },
+    },
+  },
+}
