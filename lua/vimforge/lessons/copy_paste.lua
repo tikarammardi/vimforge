@@ -1,0 +1,73 @@
+return {
+  id = "copy-paste",
+  title = "Copy and Paste",
+  summary = "y yanks, p and P put: copy and move text with the unnamed and named registers.",
+  concept = "y yanks (copies) text into a register without deleting it; d and c delete AND yank. p puts the register after the cursor, P before it. For lines, p/P paste on the next/previous line. Any register letter works: \"ayw yanks a word into register a, and \"ap puts register a.",
+  exercises = {
+    {
+      id = "yank-line-and-paste-below",
+      instruction = "Yank the line with yy, then paste it on the line below with p.",
+      initial_content = { "one" },
+      cursor = { 1, 0 },
+      validation = { type = "buffer", expected = { "one", "one" } },
+      success_message = "yy yanks the whole line; p puts it below.",
+      hints = {
+        "Type y twice, then p.",
+        "For lines, p pastes on the line after the cursor.",
+      },
+      solution = { keys = "yyp", text = "Type yy, then p." },
+    },
+    {
+      id = "paste-above-with-P",
+      instruction = "The cursor is on 'last'. Yank the line (yy) and paste it ABOVE the cursor with P.",
+      initial_content = { "first", "last" },
+      cursor = { 2, 0 },
+      validation = { type = "buffer", expected = { "first", "last", "last" } },
+      success_message = "P puts the register before the cursor (on the line above for lines).",
+      hints = {
+        "Type yy, then capital P.",
+        "p is after/below, P is before/above.",
+      },
+      solution = { keys = "yyP", text = "Type yy, then P." },
+    },
+    {
+      id = "yank-word-and-paste",
+      instruction = "Yank the word 'apple' with yw, go to the empty line below with j, and paste it there with p.",
+      initial_content = { "apple", "" },
+      cursor = { 1, 0 },
+      validation = { type = "buffer", expected = { "apple", "apple" } },
+      success_message = "yw yanks the word; p puts it at the cursor.",
+      hints = {
+        "Type y, then w, then j, then p.",
+        "yank, move to the empty line, put.",
+      },
+      solution = { keys = "yawjp", text = "Type yw, j, then p." },
+    },
+    {
+      id = "yank-into-named-register",
+      instruction = "Yank the word 'apple' into register a: type \"ayw (quote, a, y, w).",
+      initial_content = { "apple banana" },
+      cursor = { 1, 0 },
+      validation = { type = "register", register = "a", expected = "apple" },
+      success_message = "\"a before an operator sends the result to register a.",
+      hints = {
+        "Type the double quote, then a, then yw.",
+        "Any letter names a register; \" is the unnamed one.",
+      },
+      solution = { keys = "\"ayw", text = "Type \"ayw." },
+    },
+    {
+      id = "cut-and-paste",
+      instruction = "Cut the word 'apple' with dw, go to the next line with j, and paste it at the start of the line with P.",
+      initial_content = { "apple banana", "cherry" },
+      cursor = { 1, 0 },
+      validation = { type = "buffer", expected = { "banana", "apple cherry" } },
+      success_message = "d deletes AND yanks — P puts the cut text before the cursor.",
+      hints = {
+        "Type dw, then j, then capital P.",
+        "Deleting with d stores the text in the unnamed register.",
+      },
+      solution = { keys = "dwjP", text = "Type dw, j, then P." },
+    },
+  },
+}

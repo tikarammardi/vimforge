@@ -1,0 +1,60 @@
+return {
+  id = "marks-jumps",
+  title = "Marks and Jumps",
+  summary = "ma sets a mark, backtick-a jumps to it; <C-o> and <C-i> walk the jump list.",
+  concept = "m followed by a lowercase letter sets a mark at the cursor; backtick plus that letter jumps back to it (colon plus the letter jumps to its line). Every significant cursor movement is recorded in the jump list: <C-o> jumps backward through it, <C-i> forward. You can travel anywhere and always find your way home.",
+  exercises = {
+    {
+      id = "set-and-return-to-mark",
+      instruction = "Set a mark with ma, move down two lines with jj, then return to the mark with backtick-a.",
+      initial_content = { "alpha", "bravo", "charlie", "delta", "echo" },
+      cursor = { 1, 0 },
+      validation = { type = "cursor_position", position = { 1, 0 } },
+      success_message = "backtick-a returns to the exact cell of mark a.",
+      hints = {
+        "Type m, a, j, j, then the backtick key and a.",
+        "Backtick is next to the 1 key (to the left of it).",
+      },
+      solution = { keys = "majj`a", text = "Type ma, jj, then backtick-a." },
+    },
+    {
+      id = "jump-back-with-Ctrl-o",
+      instruction = "Go to the last line with G, then return to where you started with <C-o>.",
+      initial_content = { "alpha", "bravo", "charlie", "delta", "echo" },
+      cursor = { 1, 0 },
+      validation = { type = "cursor_position", position = { 1, 0 } },
+      success_message = "<C-o> jumps backward through the jump list.",
+      hints = {
+        "Type G, then Control-o.",
+        "Each G, mark jump or search adds an entry to the jump list.",
+      },
+      solution = { keys = "G<C-o>", text = "Type G, then <C-o>." },
+    },
+    {
+      id = "jump-forward-with-Ctrl-i",
+      instruction = "Go to the last line with G, back with <C-o>, then forward again with <C-i>. You should end on the last line.",
+      initial_content = { "alpha", "bravo", "charlie", "delta", "echo" },
+      cursor = { 1, 0 },
+      validation = { type = "cursor_position", position = { 5, 0 } },
+      success_message = "<C-i> jumps forward through the jump list.",
+      hints = {
+        "Type G, <C-o>, then <C-i>.",
+        "<C-i> is like <C-o> in reverse.",
+      },
+      solution = { keys = "G<C-o><C-i>", text = "Type G, <C-o>, <C-i>." },
+    },
+    {
+      id = "mark-then-jump-from-afar",
+      instruction = "Go to line 1 with gg, set a mark there with ma, travel to the last line with G, then jump back to the mark with backtick-a.",
+      initial_content = { "alpha", "bravo", "charlie", "delta", "echo" },
+      cursor = { 3, 0 },
+      validation = { type = "cursor_position", position = { 1, 0 } },
+      success_message = "Marks are the fastest way back to a known spot.",
+      hints = {
+        "Type gg, ma, G, then backtick-a.",
+        "The mark stores both the line and the column.",
+      },
+      solution = { keys = "ggmaG`a", text = "Type gg, ma, G, then backtick-a." },
+    },
+  },
+}

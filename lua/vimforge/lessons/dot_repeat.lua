@@ -1,0 +1,60 @@
+return {
+  id = "dot-repeat",
+  title = "The Dot Command",
+  summary = ". repeats your last change; 2. and 3. repeat it several times.",
+  concept = "Every change you make in normal mode — dw, cw, r, a typed character, even an insert-mode edit — can be repeated with the dot command. . replays the last change; a count before it (2., 5.) replays that many times. Mastering . is the fastest way to edit repetitive text.",
+  exercises = {
+    {
+      id = "repeat-last-change",
+      instruction = "Fix the typo on line 1: change the word with ciw, type 'the', press <Esc>. Then go to line 2 with j and repeat the exact same change with a single dot.",
+      initial_content = { "teh cat", "teh dog" },
+      cursor = { 1, 0 },
+      validation = { type = "buffer", expected = { "the cat", "the dog" } },
+      success_message = ". repeats the last change at the new cursor position.",
+      hints = {
+        "ciw, type the, <Esc>, j, then press . once.",
+        "The dot replays the whole change, not just one key.",
+      },
+      solution = { keys = "ciwthe<Esc>j.", text = "Type ciwthe, <Esc>, j, then dot." },
+    },
+    {
+      id = "repeat-with-count",
+      instruction = "Delete the first word with dw, then repeat the deletion three more times with 3. until the line is empty.",
+      initial_content = { "a b c d" },
+      cursor = { 1, 0 },
+      validation = { type = "buffer", expected = { "" } },
+      success_message = "A count before the dot repeats the change that many times.",
+      hints = {
+        "Type dw, then 3, then dot.",
+        "Each dot repetition acts at the current cursor position.",
+      },
+      solution = { keys = "dw3.", text = "Type dw, then 3." },
+    },
+    {
+      id = "repeat-insertion-with-dot",
+      instruction = "Append an exclamation mark with A and '!', press <Esc>, then press . to add one more.",
+      initial_content = { "hi" },
+      cursor = { 1, 0 },
+      validation = { type = "buffer", expected = { "hi!!" } },
+      success_message = "Insert-mode edits are repeatable with the dot too.",
+      hints = {
+        "Press A, type !, press <Esc>, then dot.",
+        "The dot remembers what you typed in insert mode.",
+      },
+      solution = { keys = "A!<Esc>.", text = "Append '!', <Esc>, then dot." },
+    },
+    {
+      id = "repeat-char-deletion",
+      instruction = "Delete the character under the cursor with x, then use 2. to repeat it twice more.",
+      initial_content = { "x y z" },
+      cursor = { 1, 0 },
+      validation = { type = "buffer", expected = { " z" } },
+      success_message = "x, like every change, is repeatable with the dot.",
+      hints = {
+        "Type x, then 2, then dot.",
+        "x deletes the character, the cursor stays put, and the next x hits the next character.",
+      },
+      solution = { keys = "x2.", text = "Type x, then 2." },
+    },
+  },
+}
