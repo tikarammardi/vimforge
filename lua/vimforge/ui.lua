@@ -72,6 +72,9 @@ function M.open_panel()
   local width = math.min(config.ensure().panel_width, math.floor(cols * 0.4))
   local win
   if cols >= 64 then
+    -- Note: `vsplit` is safe even when the current window is a float
+    -- (e.g. a file picker) — Neovim falls back to splitting the last
+    -- regular window.
     vim.cmd("vsplit")
     win = vim.api.nvim_get_current_win()
     vim.api.nvim_win_set_width(win, width)

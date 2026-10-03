@@ -157,6 +157,47 @@ describe("runner e2e", function()
       "lesson was not marked complete")
   end)
 
+  it("starts in a regular window when the current window is a float", function()
+    -- Simulates a plugin (e.g. the file picker that `nvim .` opens) whose
+    -- float window is current when the lesson starts. The scratch buffer
+    -- must land in a regular window, never in someone else's float.
+    local float_buf = vim.api.nvim_create_buf(false, true)
+    vim.bo[float_buf].buftype = "nofile"
+    vim.bo[float_buf].bufhidden = "wipe"
+    local float_win = vim.api.nvim_open_win(float_buf, true, {
+      relative = "editor",
+      width = 40,
+      height = 10,
+      col = 20,
+      row = 5,
+    })
+    vim.api.nvim_set_current_win(float_win)
+
+    runner.start("intro-to-modes")
+    assert.are.equal("active", state.active.status)
+
+    local cfg = vim.api.nvim_win_get_config(state.active.practice_win)
+    assert.is_false(
+      type(cfg.relative) == "string" and cfg.relative ~= "",
+      "practice window is a float")
+    assert.are.equal(state.active.buf, vim.api.nvim_win_get_buf(state.active.practice_win),
+      "scratch buffer not shown in the practice window")
+    assert.is_true(vim.api.nvim_buf_is_valid(state.active.buf), "scratch buffer was wiped")
+    assert.are.equal(float_buf, vim.api.nvim_win_get_buf(float_win),
+      "float window lost its own buffer")
+
+    -- Quitting must not hit E444: the tabpage keeps a regular window
+    -- (the practice window) besides the panel, even with the float around.
+    local pw = state.active.practice_win
+    feed("q")
+    assert.is_true(wait_for(function()
+      return state.active.status == "idle"
+    end, 2000), "quit did not return to idle")
+    assert.is_true(vim.api.nvim_win_is_valid(pw), "practice window was destroyed on quit")
+    assert.are.equal(user_buf, vim.api.nvim_win_get_buf(pw),
+      "user buffer not restored in the practice window")
+  end)
+
   it("does not leak scratch buffers or autocmds after quit", function()
     runner.start("intro-to-modes")
     assert.is_true(wait_for(function()

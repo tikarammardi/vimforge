@@ -35,6 +35,50 @@ local function _panel_width()
   return config.ensure().panel_width
 end
 
+local function _is_float_win(win)
+  if not win or not vim.api.nvim_win_is_valid(win) then
+    return true
+  end
+  local ok, cfg = pcall(vim.api.nvim_win_get_config, win)
+  return not ok or (type(cfg.relative) == "string" and cfg.relative ~= "")
+end
+
+-- The practice window must be a regular (non-float) window. The current
+-- window may be a float owned by another plugin (e.g. the file picker that
+-- `nvim .` opens); showing the scratch buffer there trips that plugin's
+-- buffer guards, which wipe the scratch buffer out from under us. Prefer a
+-- window that shows a regular buffer so we do not steal a window owned by
+-- another plugin's UI (its buffer is typically buftype=nofile).
+local function _pick_practice_win()
+  local cur = vim.api.nvim_get_current_win()
+  if not _is_float_win(cur) and vim.bo[vim.api.nvim_win_get_buf(cur)].buftype == "" then
+    return cur
+  end
+  local fallback
+  for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if not _is_float_win(w) then
+      fallback = fallback or w
+      if vim.bo[vim.api.nvim_win_get_buf(w)].buftype == "" then
+        return w
+      end
+    end
+  end
+  return fallback or cur
+end
+
+-- Counts regular (non-float) windows in the current tabpage, optionally
+-- excluding one. A tabpage must always keep at least one regular window;
+-- closing the last one fails with E444 even when floats remain.
+local function _count_regular_wins(exclude)
+  local n = 0
+  for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if w ~= exclude and not _is_float_win(w) then
+      n = n + 1
+    end
+  end
+  return n
+end
+
 -- Builds the validation context snapshot from live Neovim state.
 function M._build_ctx()
   local buf = state.active.buf
@@ -422,10 +466,25 @@ end
 -- previous buffer.
 function M._quit_cleanup()
   M._teardown_exercise()
+  -- Put the learner's buffer back in the practice window BEFORE dropping the
+  -- scratch: deleting the (unlisted) scratch buffer would otherwise close
+  -- the window that shows it whenever the tabpage has more than one window.
+  if state.active.practice_win and vim.api.nvim_win_is_valid(state.active.practice_win)
+    and state.active.buf and vim.api.nvim_buf_is_valid(state.active.buf)
+    and vim.api.nvim_win_get_buf(state.active.practice_win) == state.active.buf
+    and state.active.prev_buf and vim.api.nvim_buf_is_valid(state.active.prev_buf) then
+    pcall(vim.api.nvim_win_set_buf, state.active.practice_win, state.active.prev_buf)
+  end
   M._delete_scratch()
   if state.active.panel_win and vim.api.nvim_win_is_valid(state.active.panel_win) then
-    -- Never close the last window in the tabpage.
-    if #vim.api.nvim_tabpage_list_wins(0) > 1 then
+    -- The tabpage must keep a regular (non-float) window: if the practice
+    -- window is gone (e.g. closed by a :q exercise) restore the learner's
+    -- buffer in a fresh one so the panel can close.
+    if _count_regular_wins(state.active.panel_win) == 0
+      and state.active.prev_buf and vim.api.nvim_buf_is_valid(state.active.prev_buf) then
+      pcall(vim.api.nvim_open_win, state.active.prev_buf, true, {})
+    end
+    if _count_regular_wins(state.active.panel_win) > 0 then
       vim.api.nvim_win_close(state.active.panel_win, true)
     end
   end
@@ -595,8 +654,10 @@ function M._begin_session(lesson)
   state.active.lesson = lesson
   state.active.lesson_id = lesson.id
 
-  state.active.prev_win = vim.api.nvim_get_current_win()
-  state.active.prev_buf = vim.api.nvim_win_get_buf(0)
+  -- The current window may be a float (e.g. the file picker that `nvim .`
+  -- opens); fall back to a regular window for the practice area.
+  state.active.prev_win = _pick_practice_win()
+  state.active.prev_buf = vim.api.nvim_win_get_buf(state.active.prev_win)
   -- The learner's own window becomes the practice window.
   state.active.practice_win = state.active.prev_win
 
