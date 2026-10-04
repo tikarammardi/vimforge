@@ -2,14 +2,14 @@ return {
   id = "copy-paste",
   title = "Copy and Paste",
   summary = "y yanks, p and P put: copy and move text with the unnamed and named registers.",
-  concept = "y yanks (copies) text into a register without deleting it; d and c delete AND yank. p puts the register after the cursor, P before it. For lines, p/P paste on the next/previous line. Any register letter works: \"ayw yanks a word into register a, and \"ap puts register a.",
+  concept = "y yanks (copies) text into a register without deleting it; d and c delete AND yank. p puts the register after the cursor, P before it. For lines, p/P paste on the next/previous line. Any register letter works: \"ayw yanks a word into register a, and \"ap puts register a. The exercises run on docker-compose, Go imports and shell.",
   exercises = {
     {
       id = "yank-line-and-paste-below",
-      instruction = "Yank the line with yy, then paste it on the line below with p.",
-      initial_content = { "one" },
-      cursor = { 1, 0 },
-      validation = { type = "buffer", expected = { "one", "one" } },
+      instruction = "Duplicate the port mapping: yank the line with yy, then paste it on the line below with p.",
+      initial_content = { "ports:", '  - "8080:8080"' },
+      cursor = { 2, 0 },
+      validation = { type = "buffer", expected = { "ports:", '  - "8080:8080"', '  - "8080:8080"' } },
       success_message = "yy yanks the whole line; p puts it below.",
       hints = {
         "Type y twice, then p.",
@@ -19,10 +19,10 @@ return {
     },
     {
       id = "paste-above-with-P",
-      instruction = "The cursor is on 'last'. Yank the line (yy) and paste it ABOVE the cursor with P.",
-      initial_content = { "first", "last" },
+      instruction = "The cursor is on the 'log' import. Yank the line (yy) and paste it ABOVE the cursor with P.",
+      initial_content = { 'import "fmt"', 'import "log"' },
       cursor = { 2, 0 },
-      validation = { type = "buffer", expected = { "first", "last", "last" } },
+      validation = { type = "buffer", expected = { 'import "fmt"', 'import "log"', 'import "log"' } },
       success_message = "P puts the register before the cursor (on the line above for lines).",
       hints = {
         "Type yy, then capital P.",
@@ -32,10 +32,10 @@ return {
     },
     {
       id = "yank-word-and-paste",
-      instruction = "Yank the word 'apple' with yw, go to the empty line below with j, and paste it there with p.",
-      initial_content = { "apple", "" },
+      instruction = "Yank the identifier 'ctx' with yw, go to the empty line below with j, and paste it there with p.",
+      initial_content = { "ctx := context.Background()", "" },
       cursor = { 1, 0 },
-      validation = { type = "buffer", expected = { "apple", "apple" } },
+      validation = { type = "buffer", expected = { "ctx := context.Background()", "ctx" } },
       success_message = "yw yanks the word; p puts it at the cursor.",
       hints = {
         "Type y, then w, then j, then p.",
@@ -45,10 +45,10 @@ return {
     },
     {
       id = "yank-into-named-register",
-      instruction = "Yank the word 'apple' into register a: type \"ayw (quote, a, y, w).",
-      initial_content = { "apple banana" },
-      cursor = { 1, 0 },
-      validation = { type = "register", register = "a", expected = "apple" },
+      instruction = "You will need the host again. Yank the word 'localhost' into register a: type \"ayw (quote, a, y, w).",
+      initial_content = { 'dsn := "postgres://localhost:5432/api"' },
+      cursor = { 1, 19 },
+      validation = { type = "register", register = "a", expected = "localhost" },
       success_message = "\"a before an operator sends the result to register a.",
       hints = {
         "Type the double quote, then a, then yw.",
@@ -58,10 +58,10 @@ return {
     },
     {
       id = "cut-and-paste",
-      instruction = "Cut the word 'apple' with dw, go to the next line with j, and paste it at the start of the line with P.",
-      initial_content = { "apple banana", "cherry" },
+      instruction = "Move the command: cut the first word of the first line with dw, go to the next line with j, and paste it at the start of the line with P.",
+      initial_content = { 'echo "starting"', "exec ./server" },
       cursor = { 1, 0 },
-      validation = { type = "buffer", expected = { "banana", "apple cherry" } },
+      validation = { type = "buffer", expected = { '"starting"', 'echo exec ./server' } },
       success_message = "d deletes AND yanks — P puts the cut text before the cursor.",
       hints = {
         "Type dw, then j, then capital P.",

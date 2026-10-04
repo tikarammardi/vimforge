@@ -2,14 +2,14 @@ return {
   id = "quick-search",
   title = "Quick Word Search",
   summary = "* and # jump to the next/previous occurrence of the word under the cursor.",
-  concept = "Instead of typing /word, let Vim pick the word for you: * searches forward for the word under the cursor, # searches backward. Both match the whole word (no partial matches), and n / N keep jumping between occurrences like any other search.",
+  concept = "Instead of typing /word, let Vim pick the word for you: * searches forward for the word under the cursor, # searches backward. Both match the whole word (no partial matches), and n / N keep jumping between occurrences like any other search. Perfect for jumping between uses of an identifier — err, ctx, dsn.",
   exercises = {
     {
       id = "search-word-forward-with-star",
-      instruction = "With the cursor on the first 'cat', press * to jump to the next occurrence.",
-      initial_content = { "cat dog cat" },
-      cursor = { 1, 0 },
-      validation = { type = "cursor_position", position = { 1, 8 } },
+      instruction = "With the cursor on the 'err' in the format string, press * to jump to the next occurrence (the err variable).",
+      initial_content = { 'fmt.Printf("err: %v\\n", err)' },
+      cursor = { 1, 12 },
+      validation = { type = "cursor_position", position = { 1, 24 } },
       success_message = "* searches forward for the word under the cursor.",
       hints = {
         "Press the * key (Shift-8).",
@@ -19,10 +19,10 @@ return {
     },
     {
       id = "search-word-backward-with-hash",
-      instruction = "With the cursor on the last 'cat', press # to jump to the previous occurrence.",
-      initial_content = { "cat dog cat" },
-      cursor = { 1, 10 },
-      validation = { type = "cursor_position", position = { 1, 0 } },
+      instruction = "With the cursor on the err variable, press # to jump back to the previous occurrence (the 'err' in the format string).",
+      initial_content = { 'fmt.Printf("err: %v\\n", err)' },
+      cursor = { 1, 24 },
+      validation = { type = "cursor_position", position = { 1, 12 } },
       success_message = "# is the backward twin of *.",
       hints = {
         "Press the # key (Shift-3).",
@@ -32,10 +32,10 @@ return {
     },
     {
       id = "repeat-quick-search-with-n",
-      instruction = "From the first 'one', jump to the next with *, then to the one after that with n.",
-      initial_content = { "one two one one" },
-      cursor = { 1, 0 },
-      validation = { type = "cursor_position", position = { 1, 12 } },
+      instruction = "From the first 'ctx', jump to the next one with *, then to the one after that with n.",
+      initial_content = { 'render(ctx, ctx.Value("id"), ctx)' },
+      cursor = { 1, 7 },
+      validation = { type = "cursor_position", position = { 1, 29 } },
       success_message = "n / N repeat a * or # search exactly like / and ?.",
       hints = {
         "Type *, then n.",
@@ -45,11 +45,11 @@ return {
     },
     {
       id = "star-uses-word-boundaries",
-      instruction = "From the first 'cat', press *. The match must skip 'catalogue' — only a whole word counts.",
-      initial_content = { "cat catalogue cat" },
-      cursor = { 1, 0 },
-      validation = { type = "cursor_position", position = { 1, 14 } },
-      success_message = "* matches whole words only, so 'catalogue' is skipped.",
+      instruction = "From the first 'err', press *. The match must skip 'errors' — only a whole word counts.",
+      initial_content = { 'log.Println(err, errors.New("x"), err)' },
+      cursor = { 1, 12 },
+      validation = { type = "cursor_position", position = { 1, 34 } },
+      success_message = "* matches whole words only, so 'errors' is skipped.",
       hints = {
         "Press * and watch where it lands.",
         "Word boundaries are part of the match, even though you never typed them.",

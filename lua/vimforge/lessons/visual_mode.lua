@@ -2,12 +2,12 @@ return {
   id = "visual-mode",
   title = "Visual Mode",
   summary = "Select text with v, V or <C-v>, extend the selection, then delete, change or transform it.",
-  concept = "VISUAL mode selects text. Press v for charwise, V for linewise (whole lines), <C-v> for blockwise (a rectangle). Extend or shrink the selection with the motions you already know: h j k l, w, 0, $. Then act on it: d deletes, c changes (delete + insert), y yanks, x deletes, u and U change the case. <Esc> leaves VISUAL mode.",
+  concept = "VISUAL mode selects text. Press v for charwise, V for linewise (whole lines), <C-v> for blockwise (a rectangle). Extend or shrink the selection with the motions you already know: h j k l, w, 0, $. Then act on it: d deletes, c changes (delete + insert), y yanks, u and U change the case. <Esc> leaves VISUAL mode. The exercises run on Go imports, YAML and JS.",
   exercises = {
     {
       id = "select-chars-with-v",
-      instruction = "With the cursor on the 'h' of 'hello', press v to start charwise VISUAL mode, then l to extend the selection so it covers exactly 'he'.",
-      initial_content = { "hello" },
+      instruction = "With the cursor on the 'v' of 'var', press v to start charwise VISUAL mode, then l to extend the selection so it covers exactly 'va'.",
+      initial_content = { "var port = 8080" },
       cursor = { 1, 0 },
       validation = {
         type = "selection",
@@ -24,12 +24,12 @@ return {
     {
       id = "select-whole-line-with-V",
       instruction = "Press V to select the entire line (linewise VISUAL mode). Stay in VISUAL mode.",
-      initial_content = { "hello world" },
+      initial_content = { "db, err := gorm.Open(dsn, cfg)" },
       cursor = { 1, 0 },
       validation = {
         type = "selection",
         start = { 1, 0 },
-        finish = { 1, 10 },
+        finish = { 1, 29 },
       },
       success_message = "V selects whole lines; the cursor column doesn't matter.",
       hints = {
@@ -41,7 +41,7 @@ return {
     {
       id = "blockwise-select-columns",
       instruction = "Press <C-v> for blockwise VISUAL mode, then l and j, so the block covers the first two columns of both lines. Stay in VISUAL mode.",
-      initial_content = { "apple", "banana" },
+      initial_content = { "name: api", "image: api:1.2" },
       cursor = { 1, 0 },
       validation = {
         type = "selection",
@@ -57,10 +57,10 @@ return {
     },
     {
       id = "delete-a-selection",
-      instruction = "With the cursor on the 'c' of 'cat', select the word with viw and delete the selection with d.",
-      initial_content = { "keep cat" },
-      cursor = { 1, 5 },
-      validation = { type = "buffer", expected = { "keep" } },
+      instruction = "With the cursor on the 'd' of 'debug', select the word with viw and delete the selection with d.",
+      initial_content = { 'value := getFlag("debug")' },
+      cursor = { 1, 18 },
+      validation = { type = "buffer", expected = { 'value := getFlag("")' } },
       success_message = "d deletes whatever the selection covers.",
       hints = {
         "Type viw to select the word, then d.",
@@ -70,23 +70,23 @@ return {
     },
     {
       id = "change-a-selection",
-      instruction = "With the cursor on the 'c' of 'cats', select the word with viw and change it with c: type dogs, then <Esc>.",
-      initial_content = { "I like cats" },
-      cursor = { 1, 7 },
-      validation = { type = "buffer", expected = { "I like dogs" } },
+      instruction = "With the cursor on the 'c' of 'cats', select the word with viw and change it with c: type users, then <Esc>.",
+      initial_content = { 'client.Get("/cats")' },
+      cursor = { 1, 13 },
+      validation = { type = "buffer", expected = { 'client.Get("/users")' } },
       success_message = "c deletes the selection and opens INSERT mode at its start.",
       hints = {
         "Type viwc — the selection is replaced by what you type.",
         "Press <Esc> when done.",
       },
-      solution = { keys = "viwcdogs<Esc>", text = "Type viwc, type dogs, press <Esc>." },
+      solution = { keys = "viwcusers<Esc>", text = "Type viwc, type users, press <Esc>." },
     },
     {
       id = "delete-a-line-visually",
-      instruction = "The cursor is on the second line. Select the line with V and delete it with d.",
-      initial_content = { "first", "second", "third" },
+      instruction = "The cursor is on the unused import. Select the line with V and delete it with d.",
+      initial_content = { 'import "fmt"', 'import "os"', 'import "net/http"', "main()" },
       cursor = { 2, 0 },
-      validation = { type = "buffer", expected = { "first", "third" } },
+      validation = { type = "buffer", expected = { 'import "fmt"', 'import "net/http"', "main()" } },
       success_message = "Vd deletes the whole line under the cursor.",
       hints = {
         "Press V, then d.",
@@ -97,9 +97,9 @@ return {
     {
       id = "uppercase-a-selection",
       instruction = "With the cursor on the 't' of 'this', select the word with viw and change its case to UPPER with U.",
-      initial_content = { "make this loud" },
-      cursor = { 1, 5 },
-      validation = { type = "buffer", expected = { "make THIS loud" } },
+      initial_content = { 'fmt.Println("make this loud")' },
+      cursor = { 1, 18 },
+      validation = { type = "buffer", expected = { 'fmt.Println("make THIS loud")' } },
       success_message = "U uppercases the selection; u lowercases it.",
       hints = {
         "Type viwU.",

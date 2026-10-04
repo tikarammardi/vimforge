@@ -22,7 +22,10 @@ exercises. For every exercise the plugin:
    `<Enter>`.
 
 You practice with real Vim semantics — operators, text objects, registers
-and undo all behave exactly as they would in your own files.
+and undo all behave exactly as they would in your own files. Lessons and
+practice tasks use realistic content from daily backend work: Go, Python,
+Ruby, JS/TS, Postgres SQL, Dockerfiles, k8s/compose YAML, shell, Makefile
+and Markdown.
 
 In an exercise: `F1` shows a hint, `q` quits the lesson (your buffer and
 window are restored), `<Enter>` advances after success (also while in
@@ -52,7 +55,7 @@ VISUAL mode).
 ## Practice
 
 `P` in the selector (or `:VimForgePractice`) drills random tasks from a
-skill pool — 47 tasks across five categories: movement, insertion,
+skill pool — 48 tasks across five categories: movement, insertion,
 editing, text objects, and visual. Pick a category and a mode:
 
 - **goal** — complete 10 tasks

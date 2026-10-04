@@ -2,14 +2,14 @@ return {
   id = "change-case",
   title = "Change Case",
   summary = "gu and gU change the case of whatever a motion or text object covers.",
-  concept = "U and ~ change the case of a selection or a single character, but the g-prefixed versions work with any motion: gU uppercases, gu lowercases. Pair them with w (word), $ (line end), g$ (visual line end), or a text object like i( for surgical case changes — no visual selection needed.",
+  concept = "U and ~ change the case of a selection or a single character, but the g-prefixed versions work with any motion: gU uppercases, gu lowercases. Pair them with w (word), $ (line end), g$ (visual line end), or a text object like i( for surgical case changes. Classic uses: unexporting a Go name, turning a constant into SCREAMING_SNAKE, fixing a log line.",
   exercises = {
     {
       id = "lowercase-word-with-guw",
-      instruction = "With the cursor on 'M', lowercase the whole word with guw.",
-      initial_content = { "MAKE IT LOUD" },
+      instruction = "The constant should be a plain variable. With the cursor on the 'M', lowercase the whole word with guw.",
+      initial_content = { "MAX_ATTEMPTS = 5" },
       cursor = { 1, 0 },
-      validation = { type = "buffer", expected = { "make IT LOUD" } },
+      validation = { type = "buffer", expected = { "max_attempts = 5" } },
       success_message = "guw lowercases from the cursor to the end of the word.",
       hints = {
         "Type g, u, w.",
@@ -19,10 +19,10 @@ return {
     },
     {
       id = "uppercase-word-with-gUw",
-      instruction = "With the cursor on the 'i' of 'is', uppercase that word with gUw.",
-      initial_content = { "this is quiet" },
-      cursor = { 1, 5 },
-      validation = { type = "buffer", expected = { "this IS quiet" } },
+      instruction = "The setting should be a module constant. With the cursor on the 'r' of 'retry_limit', uppercase that word with gUw.",
+      initial_content = { "retry_limit = 5" },
+      cursor = { 1, 0 },
+      validation = { type = "buffer", expected = { "RETRY_LIMIT = 5" } },
       success_message = "gUw uppercases a single word, leaving the rest alone.",
       hints = {
         "Type g, U, w.",
@@ -32,10 +32,10 @@ return {
     },
     {
       id = "uppercase-to-end-with-gU$",
-      instruction = "With the cursor at the start of the line, uppercase everything to the end of the line with gU$.",
-      initial_content = { "make this LOUD" },
+      instruction = "Normalize the log line: with the cursor at the start, uppercase everything to the end of the line with gU$.",
+      initial_content = { "warn: disk full" },
       cursor = { 1, 0 },
-      validation = { type = "buffer", expected = { "MAKE THIS LOUD" } },
+      validation = { type = "buffer", expected = { "WARN: DISK FULL" } },
       success_message = "gU$ uppercases from the cursor to the line end.",
       hints = {
         "Type g, U, and the $ key.",
@@ -45,11 +45,11 @@ return {
     },
     {
       id = "lowercase-whole-line-with-gug$",
-      instruction = "With the cursor at the start of the line, lowercase the whole line with gug$.",
-      initial_content = { "SCREAMING HEADLINE" },
+      instruction = "The log line is screaming. With the cursor at the start of the line, lowercase the whole line with gug$.",
+      initial_content = { "ERROR: MIGRATION FAILED" },
       cursor = { 1, 0 },
-      validation = { type = "buffer", expected = { "screaming headline" } },
-      success_message = "gug$ lowercases the line — a calm headline.",
+      validation = { type = "buffer", expected = { "error: migration failed" } },
+      success_message = "gug$ lowercases the line — a calm log line.",
       hints = {
         "Type g, u, g, $.",
         "The second g makes $ count as a motion after gu.",
@@ -58,10 +58,10 @@ return {
     },
     {
       id = "lowercase-inside-parens",
-      instruction = "With the cursor on the '(', lowercase what is inside the parentheses with gui(.",
-      initial_content = { "do (SHOUT)" },
-      cursor = { 1, 4 },
-      validation = { type = "buffer", expected = { "do (shout)" } },
+      instruction = "With the cursor on the 'M' of 'MAX_ATTEMPTS', lowercase what is inside the parentheses with gui(.",
+      initial_content = { "retry(attempt(MAX_ATTEMPTS))" },
+      cursor = { 1, 12 },
+      validation = { type = "buffer", expected = { "retry(attempt(max_attempts))" } },
       success_message = "gui( combines a case change with a text object.",
       hints = {
         "Type g, u, i, and the open parenthesis.",
